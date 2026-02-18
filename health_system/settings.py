@@ -62,7 +62,7 @@ WSGI_APPLICATION = "health_system.wsgi.application"
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+            default=os.environ.get('postgresql://neondb_owner:npg_dwEbRjP24NKi@ep-crimson-river-a1v2lmwe-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'),
             conn_max_age=600,
             ssl_require=True
         )
