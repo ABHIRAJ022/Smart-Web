@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Doctor & Relative Dashboard</h2>
+        <p class="text-muted">Monitoring your authorized patients</p>
+    </div>
+</div>
+
+<div class="row">
+    {% for patient in patients %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ patient.username|title }}</h5>
+                <span class="badge bg-light text-primary">Patient</span>
+            </div>
+            <div class="card-body">
+                <p><strong>Contact:</strong> {{ patient.phone|default:"Not Provided" }}</p>
+                <p><strong>Device ID (Channel):</strong> {{ patient.thingspeak_channel_id|default:"Unlinked" }}</p>
+                <hr>
+                <p class="text-muted small">Live vitals monitoring access granted.</p>
+                <button class="btn btn-outline-primary btn-sm w-100">Fetch Live Vitals</button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center mt-5">
+        <div class="alert alert-warning d-inline-block shadow-sm">
+            <h5 class="mb-0">No patients have granted you access yet.</h5>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

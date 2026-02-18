@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>System Administrator Dashboard</h2>
+        <p class="text-muted">Welcome, {{ user.username }}. You have full system access.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow border-dark">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">System Management</h5>
+            </div>
+            <div class="card-body text-center py-5">
+                <h4 class="card-title">Database & Access Control</h4>
+                <p class="card-text text-muted mb-4">
+                    As an administrator, you manage the system through the Django Admin portal. 
+                    From there, you can add or remove users, assign roles, and configure Doctor-to-Patient access controls.
+                </p>
+                <a href="/admin/" class="btn btn-primary btn-lg">Open Django Admin Panel</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

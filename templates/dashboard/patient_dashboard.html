@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Welcome, {{ user.username }}</h2>
+        <p class="text-muted" id="dashboard-subtitle">Live IoT Health Data Dashboard</p>
+    </div>
+    <div class="col-md-4">
+        <div class="card {% if 'Risk' in prediction %}bg-danger text-white{% else %}bg-success text-white{% endif %}">
+            <div class="card-body text-center">
+                <h5 class="card-title">AI Prediction Status</h5>
+                <p class="card-text fw-bold">{{ prediction|default:"Waiting for Sensor Data..." }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row text-center">
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">Body Temp (°C)</div>
+            <div class="card-body"><h3 class="fw-bold">{{ iot_data.field1|default:"--" }}</h3></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">Smoke / Gas Level</div>
+            <div class="card-body"><h3 class="fw-bold">{{ iot_data.field2|default:"--" }}</h3></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">Alcohol Level</div>
+            <div class="card-body"><h3 class="fw-bold">{{ iot_data.field3|default:"--" }}</h3></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">Fall Detection (Distance)</div>
+            <div class="card-body"><h3 class="fw-bold">{{ iot_data.field4|default:"--" }}</h3></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Room Humidity</div>
+            <div class="card-body"><h3 class="fw-bold">{{ iot_data.field5|default:"--" }}</h3></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">Room Temp (°C)</div>
+            <div class="card-body"><h3 class="fw-bold">{{ iot_data.field6|default:"--" }}</h3></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set the refresh interval to 15 seconds (15000 milliseconds) to respect ThingSpeak's free tier limits
+    const refreshInterval = 15000;
+
+    setTimeout(function() {
+        // Reloads the page to fetch the latest ThingSpeak data and run the AI model
+        window.location.reload();
+    }, refreshInterval);
+
+    // Add a simple clock to show the user exactly when the data was last fetched
+    document.addEventListener("DOMContentLoaded", function() {
+        const timeString = new Date().toLocaleTimeString();
+        const subtitle = document.getElementById("dashboard-subtitle");
+        if(subtitle) {
+            subtitle.innerHTML = `Live IoT Health Data Dashboard <span class="badge bg-secondary ms-2">Last updated: ${timeString}</span>`;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow mt-5">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">User Profile</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
+                    <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
+                    <li class="list-group-item"><strong>Role:</strong> {{ user.get_role_display }}</li>
+                    <li class="list-group-item"><strong>Phone:</strong> {{ user.phone|default:"N/A" }}</li>
+                    
+                    {% if user.role == 'patient' %}
+                        <li class="list-group-item text-muted"><strong>ThingSpeak Channel:</strong> {{ user.thingspeak_channel_id|default:"None" }}</li>
+                    {% endif %}
+                </ul>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+                    <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
