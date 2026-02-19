@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="mb-3">
+    <a href="{% url 'dashboard_home' %}" class="btn btn-sm btn-secondary">&larr; Back to Dashboard</a>
+</div>
+
 <div class="row mb-4">
     <div class="col-md-8">
-        <h2>Welcome, {{ user.username }}</h2>
-        <p class="text-muted" id="dashboard-subtitle">Live IoT Health Data Dashboard</p>
+        <h2>Vitals for {{ patient.username|title }}</h2>
+        <p class="text-muted" id="dashboard-subtitle">Live IoT Health Data & History</p>
     </div>
     <div class="col-md-4">
         <div class="card {% if 'Risk' in prediction %}bg-danger text-white{% else %}bg-success text-white{% endif %}">
@@ -40,7 +44,7 @@
                     
                     <div class="col-auto">
                         <button type="submit" class="btn btn-primary">Fetch History</button>
-                        <a href="{% url 'dashboard_home' %}" class="btn btn-outline-secondary">Clear Filter & Return to Live Data</a>
+                        <a href="{% url 'view_patient_vitals' patient.id %}" class="btn btn-outline-secondary">Clear Filter</a>
                     </div>
                 </form>
             </div>
@@ -50,8 +54,7 @@
 
 {% if request.GET.start_time %}
     <div class="alert alert-info">
-        <strong>Viewing Historical Data.</strong> Live auto-refresh is paused. The values below represent the first reading found in your selected timeframe. 
-        <em>(Note: To view full trends over time, chart integration is recommended).</em>
+        <strong>Viewing Historical Data.</strong> Live auto-refresh is paused.
     </div>
 {% endif %}
 
@@ -95,14 +98,11 @@
 </div>
 
 <script>
-    // Only auto-refresh if the user is NOT using the historical date filter
     const isFiltering = window.location.search.includes("start_time");
 
     if (!isFiltering) {
         const refreshInterval = 15000;
-        setTimeout(function() {
-            window.location.reload();
-        }, refreshInterval);
+        setTimeout(function() { window.location.reload(); }, refreshInterval);
     }
 
     document.addEventListener("DOMContentLoaded", function() {
