@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="row mb-4">
     <div class="col-md-8">
         <h2>Welcome, {{ user.username }}</h2>
@@ -50,8 +52,7 @@
 
 {% if request.GET.start_time %}
     <div class="alert alert-info">
-        <strong>Viewing Historical Data.</strong> Live auto-refresh is paused. The values below represent the first reading found in your selected timeframe. 
-        <em>(Note: To view full trends over time, chart integration is recommended).</em>
+        <strong>Viewing Historical Data.</strong> Live auto-refresh is paused. The single values below represent the newest reading found in your selected timeframe. 
     </div>
 {% endif %}
 
@@ -94,15 +95,35 @@
     </div>
 </div>
 
-<script>
-    // Only auto-refresh if the user is NOT using the historical date filter
-    const isFiltering = window.location.search.includes("start_time");
+<div class="row mt-2">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white font-weight-bold text-primary">
+                Body Temperature Trend
+            </div>
+            <div class="card-body">
+                <canvas id="bodyTempChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white font-weight-bold text-success">
+                Room Environment (Temp & Humidity)
+            </div>
+            <div class="card-body">
+                <canvas id="roomEnvChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script>
+    // 1. Setup Auto-Refresh Logic
+    const isFiltering = window.location.search.includes("start_time");
     if (!isFiltering) {
         const refreshInterval = 15000;
-        setTimeout(function() {
-            window.location.reload();
-        }, refreshInterval);
+        setTimeout(function() { window.location.reload(); }, refreshInterval);
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -114,6 +135,68 @@
             } else {
                 subtitle.innerHTML = `Live IoT Health Data Dashboard <span class="badge bg-secondary ms-2">Last updated: ${timeString}</span>`;
             }
+        }
+
+        // 2. Setup Chart.js Logic
+        const rawChartData = '{{ chart_data|escapejs }}';
+        
+        if (rawChartData && rawChartData !== '[]') {
+            const feeds = JSON.parse(rawChartData);
+            
+            // Extract Timestamps for X-Axis
+            const labels = feeds.map(feed => {
+                const date = new Date(feed.created_at);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            });
+            
+            // Extract Field Data
+            const bodyTempData = feeds.map(feed => parseFloat(feed.field1 || 0));
+            const roomHumidData = feeds.map(feed => parseFloat(feed.field5 || 0));
+            const roomTempData = feeds.map(feed => parseFloat(feed.field6 || 0));
+
+            // Chart 1: Body Temperature
+            new Chart(document.getElementById('bodyTempChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Body Temp (°C)',
+                        data: bodyTempData,
+                        borderColor: '#0d6efd', // Bootstrap Primary Blue
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            // Chart 2: Room Environment 
+            new Chart(document.getElementById('roomEnvChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Room Temp (°C)',
+                            data: roomTempData,
+                            borderColor: '#198754', // Bootstrap Success Green
+                            borderWidth: 2,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: roomHumidData,
+                            borderColor: '#212529', // Bootstrap Dark
+                            borderWidth: 2,
+                            borderDash: [5, 5], // Dashed line for humidity to tell them apart easily
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: { responsive: true }
+            });
         }
     });
 </script>
