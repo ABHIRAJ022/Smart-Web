@@ -101,7 +101,7 @@
 
 <div class="row mt-2">
     <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm border-primary">
             <div class="card-header bg-white font-weight-bold text-primary">
                 Body Temperature Trend
             </div>
@@ -111,12 +111,35 @@
         </div>
     </div>
     <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm border-success">
             <div class="card-header bg-white font-weight-bold text-success">
                 Room Environment (Temp & Humidity)
             </div>
             <div class="card-body">
                 <canvas id="roomEnvChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-white font-weight-bold text-warning">
+                Air Quality Levels (Smoke & Alcohol)
+            </div>
+            <div class="card-body">
+                <canvas id="airQualityChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-info">
+            <div class="card-header bg-white font-weight-bold text-info">
+                Fall Detection (Distance)
+            </div>
+            <div class="card-body">
+                <canvas id="fallChart"></canvas>
             </div>
         </div>
     </div>
@@ -153,8 +176,11 @@
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             });
             
-            // Extract Field Data
+            // Extract All 6 Fields of Data
             const bodyTempData = feeds.map(feed => parseFloat(feed.field1 || 0));
+            const smokeData = feeds.map(feed => parseFloat(feed.field2 || 0));
+            const alcoholData = feeds.map(feed => parseFloat(feed.field3 || 0));
+            const fallData = feeds.map(feed => parseFloat(feed.field4 || 0));
             const roomHumidData = feeds.map(feed => parseFloat(feed.field5 || 0));
             const roomTempData = feeds.map(feed => parseFloat(feed.field6 || 0));
 
@@ -166,14 +192,11 @@
                     datasets: [{
                         label: 'Body Temp (°C)',
                         data: bodyTempData,
-                        borderColor: '#0d6efd', // Bootstrap Primary Blue
+                        borderColor: '#0d6efd',
                         backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
+                        borderWidth: 2, tension: 0.3, fill: true
                     }]
-                },
-                options: { responsive: true }
+                }
             });
 
             // Chart 2: Room Environment
@@ -182,24 +205,36 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: 'Room Temp (°C)',
-                            data: roomTempData,
-                            borderColor: '#198754', // Bootstrap Success Green
-                            borderWidth: 2,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Humidity (%)',
-                            data: roomHumidData,
-                            borderColor: '#212529', // Bootstrap Dark
-                            borderWidth: 2,
-                            borderDash: [5, 5], // Dashed line to easily tell them apart
-                            tension: 0.3
-                        }
+                        { label: 'Room Temp (°C)', data: roomTempData, borderColor: '#198754', borderWidth: 2, tension: 0.3 },
+                        { label: 'Humidity (%)', data: roomHumidData, borderColor: '#212529', borderWidth: 2, borderDash: [5, 5], tension: 0.3 }
                     ]
-                },
-                options: { responsive: true }
+                }
+            });
+
+            // Chart 3: Air Quality (Smoke & Alcohol)
+            new Chart(document.getElementById('airQualityChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Smoke/Gas Level', data: smokeData, borderColor: '#dc3545', borderWidth: 2, tension: 0.3 },
+                        { label: 'Alcohol Level', data: alcoholData, borderColor: '#ffc107', borderWidth: 2, tension: 0.3 } 
+                    ]
+                }
+            });
+
+            // Chart 4: Fall Detection
+            new Chart(document.getElementById('fallChart').getContext('2d'), {
+                type: 'bar', // Bar chart for visual spikes
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Distance/Movement',
+                        data: fallData,
+                        backgroundColor: '#0dcaf0', 
+                        borderWidth: 1
+                    }]
+                }
             });
         }
     });
