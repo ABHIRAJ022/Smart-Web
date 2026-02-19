@@ -21,7 +21,9 @@
                 <p><strong>Device ID (Channel):</strong> {{ patient.thingspeak_channel_id|default:"Unlinked" }}</p>
                 <hr>
                 <p class="text-muted small">Live vitals monitoring access granted.</p>
-                <button class="btn btn-outline-primary btn-sm w-100">Fetch Live Vitals</button>
+                
+                <a href="{% url 'view_patient_vitals' patient.id %}" class="btn btn-outline-primary btn-sm w-100">Fetch Live Vitals</a>
+                
             </div>
         </div>
     </div>

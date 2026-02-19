@@ -60,18 +60,6 @@
     </div>
 {% endif %}
 
-<div class="row mb-4" id="notifications-container" style="display: none;">
-    <div class="col-12">
-        <div class="card shadow-sm border-danger">
-            <div class="card-header bg-danger text-white fw-bold">
-                ⚠️ Active Health & Safety Alerts
-            </div>
-            <ul class="list-group list-group-flush" id="notification-list">
-                </ul>
-        </div>
-    </div>
-</div>
-
 <div class="row text-center">
     <div class="col-md-4 mb-3">
         <div class="card shadow-sm">
@@ -176,56 +164,19 @@
             }
         }
 
+        // Setup Chart.js Logic
         const rawChartData = '{{ chart_data|escapejs }}';
         
         if (rawChartData && rawChartData !== '[]') {
             const feeds = JSON.parse(rawChartData);
             
-            // --- NOTIFICATIONS & ALERTS LOGIC ---
-            if (feeds.length > 0 && !isFiltering) { // Only show alerts for live data
-                const latestFeed = feeds[feeds.length - 1];
-                const activeAlerts = [];
-
-                const currentBodyTemp = parseFloat(latestFeed.field1 || 0);
-                const currentSmoke = parseFloat(latestFeed.field2 || 0);
-                const currentAlcohol = parseFloat(latestFeed.field3 || 0);
-                const currentFallDist = parseFloat(latestFeed.field4 || 0);
-
-                // Define Alert Thresholds
-                if (currentBodyTemp > 38.0) {
-                    activeAlerts.push(`Fever Detected: Body temperature is very high (${currentBodyTemp}°C)`);
-                } else if (currentBodyTemp < 35.0 && currentBodyTemp > 0) {
-                    activeAlerts.push(`Low Temperature Warning: Body temperature dropped to ${currentBodyTemp}°C`);
-                }
-                if (currentSmoke > 300) {
-                    activeAlerts.push(`Fire/Gas Hazard: High smoke or gas levels detected (Level: ${currentSmoke})`);
-                }
-                if (currentAlcohol > 300) {
-                    activeAlerts.push(`Elevated Alcohol Level: Patient may be intoxicated (Level: ${currentAlcohol})`);
-                }
-                if (currentFallDist < 50 && currentFallDist > 0) { 
-                    activeAlerts.push(`CRITICAL: Potential Fall Detected! Movement/Distance suddenly dropped to ${currentFallDist}`);
-                }
-
-                if (activeAlerts.length > 0) {
-                    document.getElementById('notifications-container').style.display = 'flex';
-                    const listElement = document.getElementById('notification-list');
-                    
-                    activeAlerts.forEach(alertText => {
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item text-danger fw-bold';
-                        li.innerText = alertText;
-                        listElement.appendChild(li);
-                    });
-                }
-            }
-            // --- END NOTIFICATIONS LOGIC ---
-            
+            // Extract Timestamps for X-Axis
             const labels = feeds.map(feed => {
                 const date = new Date(feed.created_at);
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             });
             
+            // Extract All 6 Fields of Data
             const bodyTempData = feeds.map(feed => parseFloat(feed.field1 || 0));
             const smokeData = feeds.map(feed => parseFloat(feed.field2 || 0));
             const alcoholData = feeds.map(feed => parseFloat(feed.field3 || 0));
@@ -233,6 +184,7 @@
             const roomHumidData = feeds.map(feed => parseFloat(feed.field5 || 0));
             const roomTempData = feeds.map(feed => parseFloat(feed.field6 || 0));
 
+            // Chart 1: Body Temperature
             new Chart(document.getElementById('bodyTempChart').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -247,6 +199,7 @@
                 }
             });
 
+            // Chart 2: Room Environment
             new Chart(document.getElementById('roomEnvChart').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -258,6 +211,7 @@
                 }
             });
 
+            // Chart 3: Air Quality (Smoke & Alcohol)
             new Chart(document.getElementById('airQualityChart').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -269,8 +223,9 @@
                 }
             });
 
+            // Chart 4: Fall Detection
             new Chart(document.getElementById('fallChart').getContext('2d'), {
-                type: 'bar',
+                type: 'bar', // Bar chart for visual spikes
                 data: {
                     labels: labels,
                     datasets: [{
