@@ -108,6 +108,19 @@
 </div>
 
 <div class="row mt-2">
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-dark">
+            <div class="card-header bg-dark text-white font-weight-bold">
+                Master View: All Vitals Combined
+            </div>
+            <div class="card-body">
+                <canvas id="masterChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
     <div class="col-md-6 mb-4">
         <div class="card shadow-sm border-primary">
             <div class="card-header bg-white font-weight-bold text-primary">
@@ -148,6 +161,35 @@
             </div>
             <div class="card-body">
                 <canvas id="fallChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white font-weight-bold">
+                Raw Sensor Data Log
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-striped table-hover mb-0 text-center" id="dataTable">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Body Temp (°C)</th>
+                                <th>Smoke Level</th>
+                                <th>Alcohol Level</th>
+                                <th>Fall Dist.</th>
+                                <th>Room Humidity (%)</th>
+                                <th>Room Temp (°C)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -229,6 +271,63 @@
             const fallData = feeds.map(feed => parseFloat(feed.field4 || 0));
             const roomHumidData = feeds.map(feed => parseFloat(feed.field5 || 0));
             const roomTempData = feeds.map(feed => parseFloat(feed.field6 || 0));
+
+            // Populate the Numerical Data Table
+            const tbody = document.getElementById('tableBody');
+            // Reverse so the newest data appears at the top
+            [...feeds].reverse().forEach(feed => {
+                const date = new Date(feed.created_at);
+                const timeStr = date.toLocaleString();
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${timeStr}</td>
+                    <td>${parseFloat(feed.field1 || 0).toFixed(1)}</td>
+                    <td>${parseFloat(feed.field2 || 0).toFixed(1)}</td>
+                    <td>${parseFloat(feed.field3 || 0).toFixed(1)}</td>
+                    <td>${parseFloat(feed.field4 || 0).toFixed(1)}</td>
+                    <td>${parseFloat(feed.field5 || 0).toFixed(1)}</td>
+                    <td>${parseFloat(feed.field6 || 0).toFixed(1)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // ==========================================
+            // CHART 0: MASTER CHART (All Data)
+            // ==========================================
+            new Chart(document.getElementById('masterChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Body Temp', data: bodyTempData, borderColor: '#0d6efd', backgroundColor: '#0d6efd', yAxisID: 'y', tension: 0.3, pointRadius: 2 },
+                        { label: 'Room Temp', data: roomTempData, borderColor: '#198754', backgroundColor: '#198754', yAxisID: 'y', tension: 0.3, pointRadius: 2 },
+                        { label: 'Humidity', data: roomHumidData, borderColor: '#212529', backgroundColor: '#212529', yAxisID: 'y1', borderDash: [5, 5], tension: 0.3, pointRadius: 2 },
+                        { label: 'Smoke', data: smokeData, borderColor: '#dc3545', backgroundColor: '#dc3545', yAxisID: 'y1', tension: 0.3, pointRadius: 2 },
+                        { label: 'Alcohol', data: alcoholData, borderColor: '#ffc107', backgroundColor: '#ffc107', yAxisID: 'y1', tension: 0.3, pointRadius: 2 },
+                        { label: 'Fall Dist.', data: fallData, type: 'bar', backgroundColor: 'rgba(13, 202, 240, 0.4)', borderColor: '#0dcaf0', borderWidth: 1, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Temperature (°C)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Levels / Distance / %' },
+                            grid: { drawOnChartArea: false } // Prevent gridlines from overlapping
+                        }
+                    }
+                }
+            });
 
             // Chart 1: Body Temperature
             new Chart(document.getElementById('bodyTempChart').getContext('2d'), {
