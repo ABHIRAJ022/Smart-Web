@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0">Verify Your Email</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4 text-center">
+                        <label class="form-label text-muted">Enter the 6-digit code</label>
+                        <input type="text" name="otp" class="form-control text-center fw-bold fs-2" 
+                               maxlength="6" required placeholder="000000" id="otp_input">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">Verify & Complete</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="{% url 'register' %}" class="small text-decoration-none">Wrong email? Start over</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('otp_input').addEventListener('input', function (e) {
+        this.value = this.value.replace(/[^0-9]/g, ''); // Ensure only numbers
+    });
+</script>
+{% endblock %}

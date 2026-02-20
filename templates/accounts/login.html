@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load socialaccount %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-5">
         <div class="card shadow mt-5">
             <div class="card-header bg-dark text-white text-center">
-                <h4>Login to Smart Health Monitoring System</h4>
+                <h4>Login to Smart Health</h4>
             </div>
             <div class="card-body">
                 <form method="post">
@@ -15,6 +16,15 @@
                         <button type="submit" class="btn btn-primary">Login</button>
                     </div>
                 </form>
+
+                <div class="text-center mt-3">
+                    <hr>
+                    <p class="text-muted">OR</p>
+                    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger w-100">
+                        <i class="fab fa-google"></i> Login with Google
+                    </a>
+                </div>
+
                 <div class="text-center mt-3">
                     <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
                 </div>

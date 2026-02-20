@@ -1,28 +1,25 @@
 {% extends 'base.html' %}
+{% load socialaccount %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-4">
     <div class="col-md-6">
-        <div class="card shadow mt-4 mb-5">
-            <div class="card-header bg-success text-white text-center">
-                <h4>Register for Smart Health Monitoring System</h4>
+        <div class="card shadow-lg">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Smart Health Registration</h4>
             </div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
                     {{ form.as_p }}
-                    
-                    <div class="alert alert-info mt-3" role="alert">
-                        <strong>For Patients:</strong> To view your live IoT data, please select your preferred IoT Platform (ThingSpeak or Blynk) and enter your credentials above.
-                    </div>
-                    
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-success">Create Account</button>
-                    </div>
+                    <div class="alert alert-info py-2 small">OTP will be sent to verify your email.</div>
+                    <button type="submit" class="btn btn-success w-100">Create Account & Send OTP</button>
                 </form>
                 <div class="text-center mt-3">
-                    <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                    <hr><p class="text-muted">OR</p>
+                    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger w-100">
+                        <i class="fab fa-google"></i> Register with Google
+                    </a>
                 </div>
             </div>
         </div>
@@ -31,36 +28,25 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // 1. Find the Dropdown
         const platformSelect = document.querySelector("select[name='iot_platform']");
-        
-        if (platformSelect) {
-            // 2. Find the input boxes (Django wraps them in <p> tags, so we grab the closest <p>)
-            const tsChannel = document.querySelector("input[name='thingspeak_channel_id']").closest('p');
-            const tsKey = document.querySelector("input[name='thingspeak_read_key']").closest('p');
-            const blynkToken = document.querySelector("input[name='blynk_auth_token']").closest('p');
+        const tsFields = [
+            document.querySelector("input[name='thingspeak_channel_id']")?.closest('p'),
+            document.querySelector("input[name='thingspeak_read_key']")?.closest('p')
+        ];
+        const blynkField = document.querySelector("input[name='blynk_auth_token']")?.closest('p');
 
-            function toggleFields() {
-                // Hide everything first
-                if (tsChannel) tsChannel.style.display = 'none';
-                if (tsKey) tsKey.style.display = 'none';
-                if (blynkToken) blynkToken.style.display = 'none';
+        function toggleFields() {
+            tsFields.forEach(el => el && (el.style.display = 'none'));
+            if (blynkField) blynkField.style.display = 'none';
 
-                // Show only the relevant fields based on the dropdown choice
-                if (platformSelect.value === 'thingspeak') {
-                    if (tsChannel) tsChannel.style.display = 'block';
-                    if (tsKey) tsKey.style.display = 'block';
-                } else if (platformSelect.value === 'blynk') {
-                    if (blynkToken) blynkToken.style.display = 'block';
-                }
+            if (platformSelect.value === 'thingspeak') {
+                tsFields.forEach(el => el && (el.style.display = 'block'));
+            } else if (platformSelect.value === 'blynk') {
+                if (blynkField) blynkField.style.display = 'block';
             }
-
-            // 3. Listen for when the user changes the dropdown
-            platformSelect.addEventListener("change", toggleFields);
-            
-            // 4. Run it once immediately when the page loads
-            toggleFields(); 
         }
+        platformSelect.addEventListener("change", toggleFields);
+        toggleFields();
     });
 </script>
 {% endblock %}

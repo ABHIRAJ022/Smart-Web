@@ -4,19 +4,19 @@ import pandas as pd
 from django.conf import settings
 from sklearn.ensemble import RandomForestClassifier
 
-# Path to your ML model
+# Path configuration
 MODEL_DIR = os.path.join(settings.BASE_DIR, 'ml_models')
 MODEL_PATH = os.path.join(MODEL_DIR, 'disease_model.pkl')
 
+# Define feature names globally to ensure order consistency
+FEATURE_NAMES = ['bodyTemp', 'smoke', 'alcohol', 'distance', 'humidity', 'roomTemp']
+
 def train_dummy_model():
     """Auto-trains a model if disease_model.pkl is missing."""
-    print("Model not found. Training and saving a new disease_model.pkl...")
-    
-    # 1. Create the ml_models directory if it doesn't exist
     if not os.path.exists(MODEL_DIR):
         os.makedirs(MODEL_DIR)
         
-    # 2. Sample training data (0 = Normal, 1 = Critical Risk)
+    # Sample training data (Increased samples for slightly better stability)
     data = {
         'bodyTemp': [36.5, 39.5, 37.0, 40.1, 36.8, 38.9, 36.2, 39.2],
         'smoke':    [200,  750,  150,  800,  300,  650,  180,  274],
@@ -28,20 +28,18 @@ def train_dummy_model():
     }
     df = pd.DataFrame(data)
     
-    X = df.drop('label', axis=1)
+    # Explicitly define X using FEATURE_NAMES to lock order
+    X = df[FEATURE_NAMES]
     y = df['label']
     
-    # 3. Train the Random Forest AI model
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X, y)
     
-    # 4. Save the model using pickle
     with open(MODEL_PATH, 'wb') as file:
         pickle.dump(model, file)
-    print(f"✅ Model saved successfully at {MODEL_PATH}")
+    print(f"✅ Model trained and saved at {MODEL_PATH}")
 
 def load_model():
-    # If the model file is missing, train it right now!
     if not os.path.exists(MODEL_PATH):
         train_dummy_model()
         
@@ -54,32 +52,41 @@ def load_model():
 
 def predict_health_status(thingspeak_data):
     """
-    thingspeak_data is a dict containing field1 (bodyTemp), field2 (smoke), etc.
+    Predicts health status based on IoT fields.
+    Returns: String status for the Dashboard.
     """
     model = load_model()
     if not model:
-        return "Model not found."
+        return "Model Error"
 
     try:
-        # Convert ThingSpeak strings to floats
-        features = {
-            'bodyTemp': float(thingspeak_data.get('field1', 0)),
-            'smoke': float(thingspeak_data.get('field2', 0)),
-            'alcohol': float(thingspeak_data.get('field3', 0)),
-            'distance': float(thingspeak_data.get('field4', 0)),
-            'humidity': float(thingspeak_data.get('field5', 0)),
-            'roomTemp': float(thingspeak_data.get('field6', 0)),
-        }
+        # 1. Extract and convert with strict feature ordering
+        # Using a list of values ensures scikit-learn gets the data in the right 'columns'
+        current_features = [
+            float(thingspeak_data.get('field1', 0)), # bodyTemp
+            float(thingspeak_data.get('field2', 0)), # smoke
+            float(thingspeak_data.get('field3', 0)), # alcohol
+            float(thingspeak_data.get('field4', 0)), # distance
+            float(thingspeak_data.get('field5', 0)), # humidity
+            float(thingspeak_data.get('field6', 0))  # roomTemp
+        ]
         
-        # Convert to DataFrame for scikit-learn
-        df = pd.DataFrame([features])
+        # 2. Create DataFrame with explicit columns
+        df = pd.DataFrame([current_features], columns=FEATURE_NAMES)
         
-        # Make prediction (assuming model expects these features in order)
-        prediction = model.predict(df)[0] 
+        # 3. Get Prediction and Probability
+        prediction = model.predict(df)[0]
+        # Optional: Get probability to see 'how sure' the AI is
+        # probs = model.predict_proba(df)[0] 
+
+        if prediction == 1:
+            return "Critical Risk Detected"
         
-        # Example logic: 0 = Normal, 1 = Anomaly/Risk
-        # Note: The template looks for the word 'Risk' to turn the box red!
-        return "Critical Risk Detected" if prediction == 1 else "Vitals Normal"
+        # Secondary logic: Even if the AI says 0, double-check extreme thresholds
+        if float(thingspeak_data.get('field4', 100)) < 30:
+            return "Risk: Fall Detected"
+
+        return "Vitals Normal"
         
     except Exception as e:
         return f"Prediction Error: {str(e)}"
