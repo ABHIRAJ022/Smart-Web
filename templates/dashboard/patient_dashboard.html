@@ -25,18 +25,20 @@
         color: #1e293b;
         margin-bottom: 1.5rem;
         padding-left: 10px;
-        border-left: 4px solid var(--primary);
+        border-left: 4px solid #3b82f6; /* Added explicit color for primary */
     }
 
     .chart-container-main { height: 400px; position: relative; }
     .chart-container-small { height: 200px; position: relative; }
+    
+    .table-responsive { border-radius: 1rem; }
 </style>
 
 <div class="container-fluid fade-in-up">
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
         <h2 class="fw-bold text-dark m-0">Diagnostic Dashboard: {{ patient.username|title }}</h2>
         <button id="exportPdf" class="btn btn-dark btn-sm px-4 py-2" style="border-radius: 0.75rem;">
-            <i class="fas fa-file-pdf me-2"></i> Export Report
+            <i class="fas fa-file-pdf me-2 text-danger"></i> Export Report
         </button>
     </div>
 
@@ -130,6 +132,7 @@
         </div>
     </div>
 
+    <h5 class="section-title">Full Diagnostic Logs</h5>
     <div class="row mb-5">
         <div class="col-12">
             <div class="card glass-card">
@@ -162,7 +165,6 @@
         const feeds = JSON.parse(rawDataStr);
         const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         
-        // Data extraction
         const dataSet = {
             fall: feeds.map(f => parseFloat(f.field4) || 0),
             humid: feeds.map(f => parseFloat(f.field5) || 0),
@@ -172,7 +174,6 @@
             rain: feeds.map(f => parseFloat(f.field7) || 0)
         };
 
-        // Populate Table
         const tbody = document.getElementById('tableBody');
         [...feeds].reverse().forEach((f) => {
             tbody.innerHTML += `
@@ -183,10 +184,11 @@
                     <td>${f.field6 || '--'}</td>
                     <td>${f.field2 || '--'}</td>
                     <td>${f.field3 || '--'}</td>
-                    <td><span class="badge bg-info bg-opacity-10 text-info">${f.field7 || '--'}</span></td>
+                    <td>${f.field7 || '--'}</td>
                 </tr>`;
         });
 
+        // Charts Logic
         const commonOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -194,36 +196,32 @@
             scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
         };
 
-        // Helper to create individual charts
         const initSmallChart = (id, label, data, color) => {
             new Chart(document.getElementById(id), {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ label: label, data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.4, pointRadius: 2 }]
+                    datasets: [{ label: label, data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.4, pointRadius: 1 }]
                 },
                 options: commonOptions
             });
         };
 
-        // Init individual charts
-        initSmallChart('chartFall', 'Fall Distance', dataSet.fall, '#f59e0b');
-        initSmallChart('chartHumid', 'Humidity', dataSet.humid, '#0284c7');
-        initSmallChart('chartTemp', 'Room Temp', dataSet.temp, '#16a34a');
+        initSmallChart('chartFall', 'Fall', dataSet.fall, '#f59e0b');
+        initSmallChart('chartHumid', 'Humid', dataSet.humid, '#0284c7');
+        initSmallChart('chartTemp', 'Temp', dataSet.temp, '#16a34a');
         initSmallChart('chartSmoke', 'Smoke', dataSet.smoke, '#64748b');
         initSmallChart('chartAlcohol', 'Alcohol', dataSet.alcohol, '#a21caf');
         initSmallChart('chartRain', 'Rain', dataSet.rain, '#06b6d4');
 
-        // Main Global Trend Chart
-        const mainCtx = document.getElementById('mainTrendChart').getContext('2d');
-        new Chart(mainCtx, {
+        new Chart(document.getElementById('mainTrendChart').getContext('2d'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Fall (cm)', data: dataSet.fall, borderColor: '#f59e0b', tension: 0.3 },
-                    { label: 'Humid (%)', data: dataSet.humid, borderColor: '#0284c7', tension: 0.3 },
-                    { label: 'Temp (°C)', data: dataSet.temp, borderColor: '#16a34a', tension: 0.3 },
+                    { label: 'Fall', data: dataSet.fall, borderColor: '#f59e0b', tension: 0.3 },
+                    { label: 'Humid', data: dataSet.humid, borderColor: '#0284c7', tension: 0.3 },
+                    { label: 'Temp', data: dataSet.temp, borderColor: '#16a34a', tension: 0.3 },
                     { label: 'Smoke', data: dataSet.smoke, borderColor: '#64748b', tension: 0.3 },
                     { label: 'Alcohol', data: dataSet.alcohol, borderColor: '#a21caf', tension: 0.3 },
                     { label: 'Rain', data: dataSet.rain, borderColor: '#06b6d4', tension: 0.3 }
@@ -235,6 +233,36 @@
                 plugins: { legend: { position: 'top' } },
                 scales: { y: { grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
             }
+        });
+
+        // FIXED EXPORT PDF SCRIPT
+        document.getElementById('exportPdf').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for more space
+            
+            // Add Header
+            doc.setFontSize(20);
+            doc.setTextColor(40);
+            doc.text('Diagnostic Patient Report', 14, 22);
+            
+            // Add Sub-header
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            const date = new Date().toLocaleString();
+            doc.text(`Patient: {{ patient.username|title }}`, 14, 32);
+            doc.text(`Generated on: ${date}`, 14, 38);
+
+            // Generate Table using autoTable plugin
+            doc.autoTable({
+                html: '#vitalsTable',
+                startY: 45,
+                theme: 'striped',
+                headStyles: { fillColor: [59, 130, 246] }, // Primary color
+                styles: { fontSize: 9, halign: 'center' },
+                columnStyles: { 0: { halign: 'left' } }
+            });
+
+            doc.save(`Report_{{ patient.username }}_${new Date().getTime()}.pdf`);
         });
     });
 </script>
