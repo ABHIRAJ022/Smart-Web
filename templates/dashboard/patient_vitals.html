@@ -2,23 +2,14 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-    /* Premium Dashboard Animations */
-    .fade-in-up {
-        animation: slideUpFade 0.6s ease-out forwards;
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.3s; }
-    .delay-4 { animation-delay: 0.4s; }
-
-    @keyframes slideUpFade {
-        to { opacity: 1; transform: translateY(0); }
-    }
+    /* Dashboard Animations */
+    .fade-in-up { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
     /* Glassmorphism Cards */
     .glass-card {
@@ -29,39 +20,27 @@
         transition: all 0.3s ease;
         overflow: hidden;
     }
-    .glass-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    .glass-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+
+    /* Alert Pulse Animation */
+    .alert-active { animation: dangerPulse 1.5s infinite; border: 2px solid #ef4444 !important; }
+    @keyframes dangerPulse {
+        0% { background-color: #ffffff; }
+        50% { background-color: #fee2e2; }
+        100% { background-color: #ffffff; }
     }
 
     .metric-icon-box {
-        width: 54px;
-        height: 54px;
-        border-radius: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 50px; height: 50px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
     }
 
     .bg-gradient-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
     .bg-gradient-success { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
 
-    /* Custom Input Styling */
-    .premium-input {
-        border-radius: 0.75rem;
-        border: 1px solid #e5e7eb;
-        background-color: #f9fafb;
-        padding: 0.6rem 1rem;
-    }
-
     .status-pulse {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #10b981;
-        margin-right: 8px;
-        animation: pulse 2s infinite;
+        display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background: #10b981; margin-right: 8px; animation: pulse 2s infinite;
     }
     @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
@@ -70,262 +49,197 @@
     }
 </style>
 
-<div class="mb-3 fade-in-up">
-    <a href="{% url 'dashboard_home' %}" class="btn border-0 shadow-sm bg-white text-primary btn-sm px-3 py-2" style="border-radius: 0.75rem; font-weight: 600;">
-        <i class="fas fa-arrow-left me-2"></i> Back to Patient List
-    </a>
-</div>
-
-<div class="row mb-4 fade-in-up d-flex align-items-center">
-    <div class="col-md-8 mb-3 mb-md-0">
-        <h2 class="fw-bold text-dark mb-1">Vitals: {{ patient.username|title }}</h2>
-        <p class="text-muted mb-0 d-flex align-items-center" id="dashboard-subtitle">
-            <span class="status-pulse"></span> Analyzing live telemetry...
-        </p>
-    </div>
-    <div class="col-md-4">
-        <div class="card glass-card border-0 {% if 'Risk' in prediction or 'Danger' in prediction %}bg-gradient-danger text-white{% else %}bg-gradient-success text-white{% endif %}">
-            <div class="card-body text-center p-4">
-                <h6 class="text-uppercase fw-bold mb-2" style="letter-spacing: 1px; opacity: 0.85;">Clinical AI Status</h6>
-                <h5 class="fw-bold m-0">{{ prediction|default:"Syncing Sensors..." }}</h5>
-            </div>
+<div class="container-fluid fade-in-up">
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
+        <a href="{% url 'dashboard_home' %}" class="btn border-0 shadow-sm bg-white text-primary btn-sm px-3 py-2" style="border-radius: 0.75rem;">
+            <i class="fas fa-arrow-left me-2"></i> Back to Patient List
+        </a>
+        <div class="d-flex gap-2">
+            <button id="enableAudio" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 0.75rem;">
+                <i class="fas fa-volume-up me-2"></i> Audio Alerts
+            </button>
+            <button id="exportPdf" class="btn btn-dark btn-sm px-4" style="border-radius: 0.75rem;">
+                <i class="fas fa-file-pdf me-2 text-danger"></i> Export Report
+            </button>
         </div>
     </div>
-</div>
 
-<div class="row mb-4 fade-in-up delay-1">
-    <div class="col-12">
-        <div class="card glass-card">
-            <div class="card-body p-4">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label text-muted small fw-bold">Start Date/Time</label>
-                        <input type="datetime-local" name="start_time" class="form-control premium-input" value="{{ request.GET.start_time }}">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted small fw-bold">End Date/Time</label>
-                        <input type="datetime-local" name="end_time" class="form-control premium-input" value="{{ request.GET.end_time }}">
-                    </div>
-                    <div class="col-md-4 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary fw-bold px-4 flex-grow-1" style="border-radius: 0.75rem;">Apply Filter</button>
-                        <a href="{% url 'view_patient_vitals' patient.id %}" class="btn btn-light border fw-bold px-3" style="border-radius: 0.75rem;">Reset</a>
-                    </div>
-                </form>
-            </div>
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold text-dark mb-1">Vitals: {{ patient.username|title }}</h2>
+            <p class="text-muted mb-0 d-flex align-items-center" id="dashboard-subtitle">
+                <span class="status-pulse"></span> Analyzing live telemetry...
+            </p>
         </div>
-    </div>
-</div>
-
-<div class="row mb-4 fade-in-up delay-2">
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card glass-card h-100 p-3">
-            <div class="d-flex align-items-center">
-                <div class="metric-icon-box" style="background-color: #fee2e2; color: #ef4444;"><i class="fas fa-heartbeat fs-4"></i></div>
-                <div class="ms-3">
-                    <p class="text-muted small fw-bold mb-0">Body Temp</p>
-                    <h3 class="fw-bold text-dark m-0">{{ iot_data.field1|default:"--" }}°C</h3>
+        <div class="col-md-4">
+            <div class="card glass-card border-0 {% if 'Risk' in prediction or 'Danger' in prediction %}bg-gradient-danger text-white{% else %}bg-gradient-success text-white{% endif %}">
+                <div class="card-body text-center p-3">
+                    <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.7rem; opacity: 0.85;">Clinical AI Analysis</h6>
+                    <h5 class="fw-bold m-0">{{ prediction|default:"Syncing Sensors..." }}</h5>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card glass-card h-100 p-3">
-            <div class="d-flex align-items-center">
-                <div class="metric-icon-box" style="background-color: #f1f5f9; color: #64748b;"><i class="fas fa-wind fs-4"></i></div>
-                <div class="ms-3">
-                    <p class="text-muted small fw-bold mb-0">Air (Smoke)</p>
-                    <h3 class="fw-bold text-dark m-0">{{ iot_data.field2|default:"--" }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card glass-card h-100 p-3">
-            <div class="d-flex align-items-center">
-                <div class="metric-icon-box" style="background-color: #fef3c7; color: #d97706;"><i class="fas fa-wine-glass-alt fs-4"></i></div>
-                <div class="ms-3">
-                    <p class="text-muted small fw-bold mb-0">Alcohol</p>
-                    <h3 class="fw-bold text-dark m-0">{{ iot_data.field3|default:"--" }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card glass-card h-100 p-3">
-            <div class="d-flex align-items-center">
-                <div class="metric-icon-box" style="background-color: #e0e7ff; color: #4f46e5;"><i class="fas fa-user-injured fs-4"></i></div>
-                <div class="ms-3">
-                    <p class="text-muted small fw-bold mb-0">Fall Detection</p>
-                    <h3 class="fw-bold text-dark m-0">{{ iot_data.field4|default:"--" }}cm</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card glass-card h-100 p-3">
-            <div class="d-flex align-items-center">
-                <div class="metric-icon-box" style="background-color: #e0f2fe; color: #0284c7;"><i class="fas fa-tint fs-4"></i></div>
-                <div class="ms-3">
-                    <p class="text-muted small fw-bold mb-0">Humidity</p>
-                    <h3 class="fw-bold text-dark m-0">{{ iot_data.field5|default:"--" }}%</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card glass-card h-100 p-3">
-            <div class="d-flex align-items-center">
-                <div class="metric-icon-box" style="background-color: #dcfce7; color: #16a34a;"><i class="fas fa-thermometer-half fs-4"></i></div>
-                <div class="ms-3">
-                    <p class="text-muted small fw-bold mb-0">Room Temp</p>
-                    <h3 class="fw-bold text-dark m-0">{{ iot_data.field6|default:"--" }}°C</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row fade-in-up delay-3">
-    <div class="col-12 mb-4">
-        <div class="card glass-card p-3">
-            <div class="card-header bg-transparent border-0"><h5 class="fw-bold text-dark m-0">Master Correlation View</h5></div>
-            <div class="card-body"><canvas id="masterChart" height="90"></canvas></div>
+    <div class="card glass-card mb-4">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="small fw-bold text-muted">Start Time</label>
+                    <input type="datetime-local" name="start_time" class="form-control form-control-sm" value="{{ request.GET.start_time }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="small fw-bold text-muted">End Time</label>
+                    <input type="datetime-local" name="end_time" class="form-control form-control-sm" value="{{ request.GET.end_time }}">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Apply Filter</button>
+                    <a href="{% url 'view_patient_vitals' patient.id %}" class="btn btn-light btn-sm border">Reset</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card glass-card p-3 h-100">
-            <h6 class="fw-bold text-muted mb-3">Body Temperature Trend</h6>
-            <canvas id="bodyTempChart"></canvas>
+    <div class="row mb-4">
+        {% set metrics = [
+            ('Body Temp', iot_data.field1, '°C', 'fa-heartbeat', '#fee2e2', '#ef4444', 'card-body-temp'),
+            ('Air (Smoke)', iot_data.field2, '', 'fa-wind', '#f1f5f9', '#64748b', 'card-smoke'),
+            ('Alcohol', iot_data.field3, '', 'fa-wine-glass-alt', '#fef3c7', '#d97706', 'card-alcohol'),
+            ('Fall Detection', iot_data.field4, 'cm', 'fa-user-injured', '#e0e7ff', '#4f46e5', 'card-fall'),
+            ('Humidity', iot_data.field5, '%', 'fa-tint', '#e0f2fe', '#0284c7', 'card-humid'),
+            ('Room Temp', iot_data.field6, '°C', 'fa-thermometer-half', '#dcfce7', '#16a34a', 'card-room-temp')
+        ] %}
+        {% for name, val, unit, icon, bg, color, id in metrics %}
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3 h-100" id="{{ id }}">
+                <div class="metric-icon-box mb-2" style="background-color: {{ bg }}; color: {{ color }};">
+                    <i class="fas {{ icon }} fs-5"></i>
+                </div>
+                <p class="text-muted small fw-bold mb-0">{{ name }}</p>
+                <h4 class="fw-bold m-0">{{ val|default:"--" }}{{ unit }}</h4>
+            </div>
         </div>
+        {% endfor %}
     </div>
-    <div class="col-md-6 mb-4">
-        <div class="card glass-card p-3 h-100">
-            <h6 class="fw-bold text-muted mb-3">Room Environment (Temp/Humid)</h6>
-            <canvas id="roomEnvChart"></canvas>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card glass-card p-3 h-100">
-            <h6 class="fw-bold text-muted mb-3">Air Quality (Smoke/Gas)</h6>
-            <canvas id="airQualityChart"></canvas>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card glass-card p-3 h-100">
-            <h6 class="fw-bold text-muted mb-3">Movement & Fall Triggers</h6>
-            <canvas id="fallChart"></canvas>
-        </div>
-    </div>
-</div>
 
-<div class="row mb-5 fade-in-up delay-4">
-    <div class="col-12">
-        <div class="card glass-card p-3">
-            <div class="card-header bg-transparent border-0 pb-3"><h5 class="fw-bold text-dark m-0">Full Sensor Log</h5></div>
-            <div class="table-responsive" style="max-height: 400px; border-radius: 1rem;">
-                <table class="table table-hover text-center mb-0">
-                    <thead class="bg-light sticky-top">
-                        <tr><th>Time</th><th>Body Temp</th><th>Smoke</th><th>Alcohol</th><th>Fall</th><th>Humid</th><th>Room Temp</th></tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
+    <div class="row mb-4">
+        <div class="col-12 mb-4">
+            <div class="card glass-card p-3">
+                <h5 class="fw-bold mb-3">Master Telemetry Correlation</h5>
+                <canvas id="masterChart" height="80"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3 h-100">
+                <h6 class="fw-bold text-muted small mb-2">Body Temp Trend</h6>
+                <canvas id="bodyTempChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3 h-100">
+                <h6 class="fw-bold text-muted small mb-2">Air & Alcohol</h6>
+                <canvas id="airQualityChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3 h-100">
+                <h6 class="fw-bold text-muted small mb-2">Room Environment</h6>
+                <canvas id="roomEnvChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card glass-card">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover text-center mb-0" id="vitalsTable">
+                        <thead class="bg-light sticky-top">
+                            <tr><th>Time</th><th>Body Temp</th><th>Smoke</th><th>Alcohol</th><th>Fall</th><th>Humid</th><th>Room Temp</th></tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const isFiltering = window.location.search.includes("start_time");
-    if (!isFiltering) setTimeout(() => { window.location.reload(); }, 20000);
+    // 1. Audio Alert System
+    let audioContext;
+    let audioEnabled = false;
+    function playAlert() {
+        if (!audioEnabled) return;
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        osc.connect(gain); gain.connect(audioContext.destination);
+        osc.start(); osc.stop(audioContext.currentTime + 0.5);
+    }
 
+    document.getElementById('enableAudio').addEventListener('click', function() {
+        audioEnabled = true;
+        this.classList.replace('btn-outline-secondary', 'btn-success');
+        this.innerHTML = '<i class="fas fa-check me-2"></i> Audio On';
+    });
+
+    // 2. Data & Charts
     document.addEventListener("DOMContentLoaded", function() {
-        const subtitle = document.getElementById("dashboard-subtitle");
-        const time = new Date().toLocaleTimeString();
-        subtitle.innerHTML = isFiltering ? 
-            `<i class="fas fa-history me-2 text-info"></i> Historical Mode` : 
-            `<span class="status-pulse"></span> Live Monitoring (Synced: ${time})`;
-
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = '#94a3b8';
-        
         const rawData = '{{ chart_data|escapejs }}';
         if (!rawData || rawData === '[]') return;
 
         const feeds = JSON.parse(rawData);
         const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        const feeds_rev = [...feeds].reverse();
         
-        const data = {
-            bodyT: feeds.map(f => parseFloat(f.field1 || 0)),
-            smoke: feeds.map(f => parseFloat(f.field2 || 0)),
-            alcohol: feeds.map(f => parseFloat(f.field3 || 0)),
-            fall: feeds.map(f => parseFloat(f.field4 || 0)),
-            humid: feeds.map(f => parseFloat(f.field5 || 0)),
-            roomT: feeds.map(f => parseFloat(f.field6 || 0))
-        };
+        // Threshold Monitoring
+        const latest = feeds[feeds.length - 1];
+        if (parseFloat(latest.field2) > 500) { 
+            document.getElementById('card-smoke').classList.add('alert-active');
+            setInterval(playAlert, 2000);
+        }
 
         // Table Population
         const tbody = document.getElementById('tableBody');
-        [...feeds].reverse().forEach(f => {
+        feeds_rev.forEach(f => {
             tbody.innerHTML += `<tr>
-                <td class="small fw-bold">${new Date(f.created_at).toLocaleString([], {dateStyle:'short', timeStyle:'short'})}</td>
+                <td class="small fw-bold">${new Date(f.created_at).toLocaleString()}</td>
                 <td><span class="badge bg-danger bg-opacity-10 text-danger">${f.field1}°C</span></td>
                 <td>${f.field2}</td><td>${f.field3}</td><td>${f.field4}cm</td><td>${f.field5}%</td>
                 <td><span class="badge bg-success bg-opacity-10 text-success">${f.field6}°C</span></td>
             </tr>`;
         });
 
-        // 1. Master View
-        new Chart(document.getElementById('masterChart'), {
+        // Charts
+        const ctxMaster = document.getElementById('masterChart').getContext('2d');
+        new Chart(ctxMaster, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Body Temp', data: data.bodyT, borderColor: '#ef4444', yAxisID: 'y', tension: 0.4 },
-                    { label: 'Fall Dist', data: data.fall, type: 'bar', backgroundColor: 'rgba(99, 102, 241, 0.2)', yAxisID: 'y1' }
+                    { label: 'Body Temp', data: feeds.map(f => f.field1), borderColor: '#ef4444', tension: 0.4 },
+                    { label: 'Room Temp', data: feeds.map(f => f.field6), borderColor: '#10b981', tension: 0.4 },
+                    { label: 'Fall Dist', data: feeds.map(f => f.field4), type: 'bar', backgroundColor: 'rgba(99, 102, 241, 0.1)' }
                 ]
-            },
-            options: { scales: { y: { position: 'left' }, y1: { position: 'right', grid: {display: false} } } }
+            }
         });
 
-        // 2. Individual Trend Charts
-        const common = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false } } };
-
-        new Chart(document.getElementById('bodyTempChart'), {
-            type: 'line',
-            data: { labels: labels, datasets: [{ data: data.bodyT, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.4 }] },
-            options: common
+        // 3. Export PDF
+        document.getElementById('exportPdf').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.text('Diagnostic Report: {{ patient.username|title }}', 14, 15);
+            doc.autoTable({ html: '#vitalsTable', startY: 25, theme: 'grid' });
+            doc.save('Report_{{ patient.username }}.pdf');
         });
 
-        new Chart(document.getElementById('roomEnvChart'), {
-            type: 'line',
-            data: { 
-                labels: labels, 
-                datasets: [
-                    { label: 'Temp', data: data.roomT, borderColor: '#10b981', tension: 0.4 },
-                    { label: 'Humid', data: data.humid, borderColor: '#0ea5e9', borderDash: [5, 5], tension: 0.4 }
-                ]
-            },
-            options: { ...common, plugins: { legend: { display: true, position: 'bottom' } } }
-        });
-
-        new Chart(document.getElementById('airQualityChart'), {
-            type: 'line',
-            data: { 
-                labels: labels, 
-                datasets: [
-                    { label: 'Smoke', data: data.smoke, borderColor: '#64748b', tension: 0.4 },
-                    { label: 'Alcohol', data: data.alcohol, borderColor: '#f59e0b', tension: 0.4 }
-                ]
-            },
-            options: { ...common, plugins: { legend: { display: true, position: 'bottom' } } }
-        });
-
-        new Chart(document.getElementById('fallChart'), {
-            type: 'bar',
-            data: { labels: labels, datasets: [{ data: data.fall, backgroundColor: '#6366f1', borderRadius: 4 }] },
-            options: common
-        });
+        // Auto-refresh logic
+        if (!window.location.search.includes("start_time")) {
+            setTimeout(() => window.location.reload(), 30000);
+        }
     });
 </script>
 {% endblock %}
