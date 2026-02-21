@@ -10,7 +10,7 @@ from urllib.parse import quote
 def fetch_thingspeak_data(channel_id, read_key, start_time=None, end_time=None):
     """
     Fetches historical or live data from ThingSpeak API.
-    Handles URL encoding for time-filtered queries.
+    Handles datetime formatting for ThingSpeak-specific query requirements.
     """
     if not channel_id or not read_key:
         return []
@@ -18,17 +18,18 @@ def fetch_thingspeak_data(channel_id, read_key, start_time=None, end_time=None):
     url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.json?api_key={read_key}"
     
     if start_time and end_time:
-        # Convert HTML5 datetime-local format (T) to ThingSpeak format (space)
+        # ThingSpeak requires %20 instead of T and needs seconds.
+        # Example: '2023-10-27T14:30' -> '2023-10-27 14:30:00'
         formatted_start = quote(start_time.replace('T', ' ') + ':00')
         formatted_end = quote(end_time.replace('T', ' ') + ':00')
         url += f"&start={formatted_start}&end={formatted_end}"
     else:
-        # Default to last 30 readings to keep charts performant
-        url += "&results=30"
+        # Default to last 60 results for a better chart experience
+        url += "&results=60"
 
     try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status() # Check for HTTP errors
+        response = requests.get(url, timeout=7)
+        response.raise_for_status() 
         data = response.json()
         return data.get('feeds', [])
     except Exception as e:
@@ -38,22 +39,20 @@ def fetch_thingspeak_data(channel_id, read_key, start_time=None, end_time=None):
 @login_required
 def dashboard_home(request):
     """
-    Main entry point for the dashboard. 
-    Routes users based on their role: Patient, Doctor, Relative, or Admin.
+    Main entry point. Routes Patients to their vitals and 
+    Doctors/Relatives to their patient list.
     """
     user = request.user
     
-    # Check for incomplete profiles (Crucial for Google Social Login users)
     if not user.role:
         messages.info(request, "Please complete your profile by selecting a role.")
         return redirect('profile')
 
-    context = {'role': user.role}
-    start_time = request.GET.get('start_time')
-    end_time = request.GET.get('end_time')
-
-    # --- PATIENT ROLE ---
+    # --- PATIENT ROLE: Auto-load their own vitals ---
     if user.role == 'patient':
+        start_time = request.GET.get('start_time')
+        end_time = request.GET.get('end_time')
+        
         feeds = fetch_thingspeak_data(
             user.thingspeak_channel_id, 
             user.thingspeak_read_key,
@@ -64,49 +63,59 @@ def dashboard_home(request):
         latest_data = feeds[-1] if feeds else None
         prediction = predict_health_status(latest_data) if latest_data else "No data available"
         
-        context.update({
+        context = {
+            'role': user.role,
+            'patient': user,
             'iot_data': latest_data,
             'prediction': prediction,
-            'chart_data': json.dumps(feeds), # Passed to Chart.js in the template
+            'chart_data': json.dumps(feeds),
             'start_time': start_time,
             'end_time': end_time,
-        })
+            'is_self_view': True,
+        }
         return render(request, 'dashboard/patient_dashboard.html', context)
 
-    # --- DOCTOR / RELATIVE ROLE ---
+    # --- DOCTOR / RELATIVE ROLE: Load list of authorized patients ---
     elif user.role in ['doctor', 'relative']:
-        # Fetch patients who have explicitly granted access via AccessControl model
         accessible_records = AccessControl.objects.filter(granted_to=user).select_related('patient')
         patients = [record.patient for record in accessible_records]
-        context['patients'] = patients
-        return render(request, 'dashboard/doctor_dashboard.html', context)
+        
+        return render(request, 'dashboard/doctor_dashboard.html', {
+            'role': user.role,
+            'patients': patients
+        })
         
     # --- ADMIN ROLE ---
     elif user.role == 'admin':
-        context['all_users'] = CustomUser.objects.all().order_by('-date_joined')
-        return render(request, 'dashboard/admin_dashboard.html', context)
+        all_users = CustomUser.objects.all().order_by('-date_joined')
+        return render(request, 'dashboard/admin_dashboard.html', {
+            'role': user.role,
+            'all_users': all_users
+        })
 
     return redirect('profile')
 
 @login_required
 def view_patient_vitals(request, patient_id):
     """
-    Detailed view for Doctors/Relatives to see a specific patient's data.
+    Authorized view for Doctors/Relatives to see specific patient metrics.
     Includes security checks to prevent unauthorized data access.
     """
     patient = get_object_or_404(CustomUser, id=patient_id, role='patient')
     
-    # Security: Ensure current user has permission to view this specific patient
+    # Security Validation
     if request.user.role in ['doctor', 'relative']:
         has_access = AccessControl.objects.filter(patient=patient, granted_to=request.user).exists()
         if not has_access:
-            messages.error(request, "You do not have permission to view this patient's data.")
+            messages.error(request, "Access Denied: Permission not granted by patient.")
             return redirect('dashboard_home')
     
-    # Patients can only view their own vitals through this view
-    elif request.user.role == 'patient' and request.user.id != patient.id:
-        return redirect('dashboard_home')
-
+    elif request.user.role == 'patient':
+        if request.user.id != int(patient_id):
+            messages.warning(request, "Access Denied: You cannot view other patients.")
+            return redirect('dashboard_home')
+    
+    # Data Fetching
     start_time = request.GET.get('start_time')
     end_time = request.GET.get('end_time')
 
@@ -118,7 +127,7 @@ def view_patient_vitals(request, patient_id):
     )
     
     latest_data = feeds[-1] if feeds else None
-    prediction = predict_health_status(latest_data) if latest_data else "Waiting for data..."
+    prediction = predict_health_status(latest_data) if latest_data else "Waiting for stream..."
         
     context = {
         'patient': patient, 
@@ -127,5 +136,7 @@ def view_patient_vitals(request, patient_id):
         'chart_data': json.dumps(feeds),
         'start_time': start_time,
         'end_time': end_time,
+        'is_self_view': False,
     }
-    return render(request, 'dashboard/patient_vitals.html', context)
+    
+    return render(request, 'dashboard/patient_dashboard.html', context)

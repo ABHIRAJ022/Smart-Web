@@ -1,22 +1,117 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card border-danger mb-3">
-        <div class="card-header bg-danger text-white">Delete Account</div>
-        <div class="card-body text-danger">
-            <h5 class="card-title">Are you absolutely sure?</h5>
-            <p class="card-text">
-                This action cannot be undone. This will permanently delete your account, 
-                your health records, and remove your connection to the ThingSpeak sensors.
-            </p>
-            
-            <form method="POST">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Yes, Delete My Account</button>
-                <a href="{% url 'update_profile' %}" class="btn btn-secondary">No, Take Me Back</a>
-            </form>
+<style>
+    /* Custom Premium Styles */
+    .premium-delete-card {
+        max-width: 480px;
+        width: 100%;
+        border: none;
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        animation: slideUpFade 0.5s ease-out forwards;
+        background: #ffffff;
+    }
+    
+    .icon-circle-danger {
+        width: 80px;
+        height: 80px;
+        background-color: #fee2e2;
+        color: #dc2626;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+
+    @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-premium {
+        border-radius: 0.75rem;
+        padding: 0.85rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    /* Only allow hover effect if button is not disabled */
+    .btn-premium:not(:disabled):hover {
+        transform: translateY(-2px);
+    }
+
+    .form-control-premium {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+        text-align: center;
+    }
+    
+    .form-control-premium:focus {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
+        outline: none;
+    }
+</style>
+
+<div class="container d-flex justify-content-center align-items-center py-5" style="min-height: 80vh;">
+    <div class="card premium-delete-card text-center p-4 p-md-5">
+        
+        <div class="icon-circle-danger shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+            </svg>
         </div>
+
+        <h2 class="fw-bold mb-3 text-dark">Delete Account?</h2>
+        <p class="text-muted mb-3 fs-6 px-2">
+            This action <strong class="text-danger">cannot be undone</strong>. This will permanently delete your health records and remove your ThingSpeak sensor connections.
+        </p>
+
+        <div class="mb-4 text-start bg-light p-3 rounded border">
+            <label for="confirmDeleteInput" class="form-label text-muted small fw-bold mb-2">
+                To verify, type <strong class="text-dark user-select-none">{{ user.username }}</strong> below:
+            </label>
+            <input type="text" id="confirmDeleteInput" class="form-control form-control-premium" autocomplete="off" placeholder="{{ user.username }}">
+        </div>
+        
+        <form method="POST" class="d-flex flex-column gap-3">
+            {% csrf_token %}
+            
+            <a href="{% url 'profile' %}" class="btn btn-light btn-premium text-dark border shadow-sm">
+                No, Keep My Account
+            </a>
+            
+            <button type="submit" id="deleteSubmitBtn" class="btn btn-danger btn-premium shadow-sm opacity-50" disabled>
+                Yes, Delete Everything
+            </button>
+        </form>
+        
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputField = document.getElementById("confirmDeleteInput");
+        const deleteBtn = document.getElementById("deleteSubmitBtn");
+        
+        // Django injects the actual username here
+        const requiredText = "{{ user.username }}";
+
+        inputField.addEventListener("input", function() {
+            if (this.value === requiredText) {
+                // Enable button and remove faded look
+                deleteBtn.disabled = false;
+                deleteBtn.classList.remove("opacity-50");
+            } else {
+                // Keep disabled
+                deleteBtn.disabled = true;
+                deleteBtn.classList.add("opacity-50");
+            }
+        });
+    });
+</script>
 {% endblock %}

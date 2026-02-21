@@ -1,38 +1,135 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h2>Doctor & Relative Dashboard</h2>
-        <p class="text-muted">Monitoring your authorized patients</p>
-    </div>
-</div>
+<style>
+    /* Premium Glass Layout */
+    .patient-glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 1.5rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .patient-glass-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+        border-color: #6366f1;
+    }
 
-<div class="row">
-    {% for patient in patients %}
-    <div class="col-md-6 mb-4">
-        <div class="card shadow border-primary">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{{ patient.username|title }}</h5>
-                <span class="badge bg-light text-primary">Patient</span>
-            </div>
-            <div class="card-body">
-                <p><strong>Contact:</strong> {{ patient.phone|default:"Not Provided" }}</p>
-                <p><strong>Device ID (Channel):</strong> {{ patient.thingspeak_channel_id|default:"Unlinked" }}</p>
-                <hr>
-                <p class="text-muted small">Live vitals monitoring access granted.</p>
-                
-                <a href="{% url 'view_patient_vitals' patient.id %}" class="btn btn-outline-primary btn-sm w-100">Fetch Live Vitals</a>
-                
-            </div>
+    .live-pulse {
+        width: 8px; height: 8px;
+        background: #22c55e;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+        position: relative;
+    }
+
+    .live-pulse::after {
+        content: ''; position: absolute; top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: #22c55e;
+        border-radius: 50%;
+        animation: pulse-ring 1.5s infinite;
+    }
+
+    @keyframes pulse-ring {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3); opacity: 0; }
+    }
+
+    .avatar-circle {
+        width: 56px; height: 56px;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: white; border-radius: 18px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 1.4rem;
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+    }
+
+    .tech-label {
+        font-size: 0.65rem; text-transform: uppercase;
+        letter-spacing: 1px; font-weight: 800; color: #94a3b8;
+        margin-bottom: 2px; display: block;
+    }
+
+    .btn-monitor {
+        background: #f1f5f9; color: #1e293b;
+        border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 0.8rem; font-weight: 700;
+        transition: all 0.3s ease; text-decoration: none;
+    }
+
+    .btn-monitor:hover {
+        background: linear-gradient(90deg, #2563eb, #7c3aed);
+        color: white !important; transform: translateY(-2px);
+    }
+
+    .fade-in-card {
+        animation: reveal 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        opacity: 0;
+    }
+
+    @keyframes reveal {
+        from { opacity: 0; transform: translateY(30px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row mb-5 fade-in-card">
+        <div class="col-lg-8">
+            <h1 class="fw-800 text-dark mb-2" style="letter-spacing: -1.5px; font-weight: 800;">Patient Monitoring</h1>
+            <p class="text-muted lead">Real-time health telemetry from authorized IoT-connected profiles.</p>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12 text-center mt-5">
-        <div class="alert alert-warning d-inline-block shadow-sm">
-            <h5 class="mb-0">No patients have granted you access yet.</h5>
+
+    <div class="row">
+        {% for p in patients %}
+        <div class="col-md-6 col-lg-4 mb-4 fade-in-card" style="animation-delay: calc(0.1s * {{ forloop.counter }});">
+            <div class="card patient-glass-card h-100 p-3">
+                <div class="d-flex align-items-center gap-3 mb-4 p-2">
+                    <div class="avatar-circle">{{ p.username|first|upper }}</div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">{{ p.get_full_name|default:p.username|title }}</h5>
+                        <div class="d-flex align-items-center">
+                            <span class="live-pulse"></span>
+                            <span class="text-success fw-bold" style="font-size: 0.75rem;">System Link Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body bg-white bg-opacity-40 rounded-4 p-3 mb-3 border border-white">
+                    <div class="row g-0">
+                        <div class="col-6 border-end border-light">
+                            <span class="tech-label">Phone</span>
+                            <span class="fw-bold text-dark small">{{ p.phone|default:"---" }}</span>
+                        </div>
+                        <div class="col-6 ps-3">
+                            <span class="tech-label">IoT Channel</span>
+                            <span class="fw-bold text-primary small font-monospace">#{{ p.thingspeak_channel_id|default:"OFF" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{% url 'view_patient_vitals' p.id %}" class="btn btn-monitor d-flex justify-content-center align-items-center gap-2">
+                    <i class="fas fa-chart-line"></i> Open Live Stream
+                </a>
+            </div>
         </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 rounded-5 border-2 border-dashed bg-light">
+            <i class="fas fa-user-slash fa-3x text-muted mb-3 opacity-25"></i>
+            <h4 class="fw-bold text-dark">No Access Granted</h4>
+            <p class="text-muted">You are not monitoring any patients yet.</p>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 {% endblock %}

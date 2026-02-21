@@ -1,31 +1,150 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card shadow border-0">
-            <div class="card-header bg-primary text-white text-center py-3">
-                <h4 class="mb-0">Verify Your Email</h4>
-            </div>
-            <div class="card-body p-4">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-4 text-center">
-                        <label class="form-label text-muted">Enter the 6-digit code</label>
-                        <input type="text" name="otp" class="form-control text-center fw-bold fs-2" 
-                               maxlength="6" required placeholder="000000" id="otp_input">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 btn-lg">Verify & Complete</button>
-                </form>
-                <div class="text-center mt-3">
-                    <a href="{% url 'register' %}" class="small text-decoration-none">Wrong email? Start over</a>
+<style>
+    /* Entrance Animation */
+    .fade-in-up {
+        animation: slideUpFade 0.5s ease-out forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    @keyframes slideUpFade {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modern Auth Card */
+    .auth-glass-card {
+        background: #ffffff;
+        border: none;
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        padding: 3rem 2.5rem;
+    }
+
+    /* Icon Container */
+    .auth-icon-container {
+        width: 64px;
+        height: 64px;
+        background: #eff6ff;
+        color: #3b82f6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Premium OTP Input Styling */
+    .otp-input {
+        letter-spacing: 0.75em; /* Spreads out the numbers */
+        font-size: 2rem !important;
+        font-weight: 700;
+        text-align: center;
+        border: 2px solid #e2e8f0;
+        border-radius: 1rem;
+        background-color: #f8fafc;
+        color: #0f172a;
+        transition: all 0.3s ease;
+        padding-left: 1.2em; /* Balances the letter-spacing offset */
+    }
+    .otp-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        background-color: #ffffff;
+    }
+    .otp-input::placeholder {
+        color: #cbd5e1;
+        font-weight: 400;
+    }
+
+    /* Gradient Primary Button */
+    .btn-auth-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.85rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    .btn-auth-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+        color: white;
+    }
+
+    /* Helper Links */
+    .auth-link {
+        color: #64748b;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+    .auth-link:hover {
+        color: #3b82f6;
+    }
+</style>
+
+<div class="row justify-content-center align-items-center mb-5 fade-in-up">
+    <div class="col-md-6 col-lg-5">
+        <div class="auth-glass-card mt-5">
+            
+            <div class="text-center mb-4">
+                <div class="auth-icon-container">
+                    <i class="fas fa-shield-alt"></i>
                 </div>
+                <h3 class="fw-bold text-dark mb-1">Verify Your Email</h3>
+                <p class="text-muted small px-3">We've sent a 6-digit verification code to your email address. Please enter it below.</p>
             </div>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-4 mt-2">
+                    <input type="text" 
+                           name="otp" 
+                           class="form-control otp-input py-3 shadow-sm" 
+                           maxlength="6" 
+                           required 
+                           placeholder="••••••" 
+                           id="otp_input"
+                           autocomplete="one-time-code"
+                           inputmode="numeric">
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-auth-primary w-100 btn-lg">
+                        Verify & Complete <i class="fas fa-check-circle ms-2"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-4 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                <a href="{% url 'register' %}" class="auth-link">
+                    <i class="fas fa-arrow-left me-1 text-sm"></i> Wrong email? Start over
+                </a>
+            </div>
+
         </div>
     </div>
 </div>
+
 <script>
-    document.getElementById('otp_input').addEventListener('input', function (e) {
-        this.value = this.value.replace(/[^0-9]/g, ''); // Ensure only numbers
+    document.addEventListener("DOMContentLoaded", function() {
+        const otpInput = document.getElementById('otp_input');
+        
+        // Auto-focus the input on page load for immediate typing
+        otpInput.focus();
+
+        // Enforce numeric only
+        otpInput.addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
     });
 </script>
 {% endblock %}

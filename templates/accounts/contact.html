@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+<style>
+    :root {
+        --main-color: #0ea5e9;
+        --text-color: #1e293b;
+        --secondary-bg: #f8fafc;
+    }
+
+    /* Animation */
+    .fade-in-up { 
+        animation: slideUpFade 0.6s ease-out forwards; 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    @keyframes slideUpFade { 
+        to { opacity: 1; transform: translateY(0); } 
+    }
+
+    /* Layout Containers */
+    .contact-container {
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+        gap: 2rem;
+        margin-top: 3rem;
+        margin-bottom: 3rem;
+    }
+
+    .contact-info {
+        flex: 1;
+        background: var(--secondary-bg);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .contact-form-card {
+        flex: 1.5;
+        background: #ffffff;
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        padding: 3rem;
+        border: 1px solid #f1f5f9;
+    }
+
+    /* Info Items */
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .info-item i {
+        font-size: 2rem;
+        color: var(--main-color);
+        background: white;
+        padding: 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 10px 15px rgba(0,0,0,0.03);
+    }
+
+    .heading { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+    .heading span { color: var(--main-color); }
+
+    /* Form Styling */
+    .contact-input {
+        width: 100%;
+        padding: 1rem 1.2rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background-color: #f8fafc;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .contact-input:focus {
+        outline: none;
+        border-color: var(--main-color);
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        background-color: #ffffff;
+    }
+
+    .btn-submit {
+        background: var(--main-color);
+        color: white;
+        border: none;
+        border-radius: 4rem;
+        padding: 1rem 2.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+        cursor: pointer;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
+    }
+
+    /* Map Styling - Fixed the height and display */
+    .map-wrapper {
+        width: 100%;
+        height: 450px;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        margin-bottom: 5rem;
+        border: 1px solid #f1f5f9;
+    }
+
+    @media (max-width: 992px) {
+        .contact-container { flex-direction: column; }
+    }
+</style>
+
+<div class="container fade-in-up">
+    <div class="text-center mt-5">
+        <h2 class="heading">Get In <span>Touch</span></h2>
+        <p class="text-muted mx-auto" style="max-width: 500px;">
+            Have questions about our Health Monitoring System? Reach out to us and we'll get back to you shortly.
+        </p>
+    </div>
+
+    <div class="contact-container">
+        <div class="contact-info">
+            <div class="info-item">
+                <i class='bx bxs-envelope'></i>
+                <div>
+                    <h5 class="mb-0 fw-bold">Email Us</h5>
+                    <p class="text-muted mb-0">healthcare@gmail.com</p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <i class='bx bxs-phone-call'></i>
+                <div>
+                    <h5 class="mb-0 fw-bold">Call Us</h5>
+                    <p class="text-muted mb-0">+91 96012 70941</p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <i class='bx bxs-map'></i>
+                <div>
+                    <h5 class="mb-0 fw-bold">Location</h5>
+                    <p class="text-muted mb-0">Bavla, Ahmedabad, Gujarat</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h6 class="fw-bold mb-3">Connect With Us</h6>
+                <div class="d-flex gap-3">
+                    <a href="#" class="btn btn-outline-primary shadow-sm rounded-circle p-2"><i class='bx bxl-linkedin'></i></a>
+                    <a href="#" class="btn btn-outline-primary shadow-sm rounded-circle p-2"><i class='bx bxl-twitter'></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-form-card">
+            <form action="{% url 'contact' %}" method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="fw-bold text-dark small mb-2">Full Name</label>
+                        <input type="text" name="name" class="contact-input" placeholder="Your name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="fw-bold text-dark small mb-2">Email Address</label>
+                        <input type="email" name="email" class="contact-input" placeholder="email@example.com" required>
+                    </div>
+                </div>
+
+                <label class="fw-bold text-dark small mb-2">Message</label>
+                <textarea name="message" class="contact-input" rows="4" placeholder="How can we help?" required></textarea>
+                
+                <div class="text-end">
+                    <button type="submit" class="btn-submit">
+                        Send Message <i class='bx bxs-paper-plane ms-2'></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="map-wrapper">
+        <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14705.54284534726!2d72.35515325!3d22.8622158!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e967f67866579%3A0xc47b97c0c1737e8c!2sBavla%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
+            width="100%" 
+            height="100%" 
+            style="border:0;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+    </div>
+</div>
+{% endblock %}

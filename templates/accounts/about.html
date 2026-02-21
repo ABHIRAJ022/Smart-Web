@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .section-title {
+        font-weight: 800;
+        font-size: 3.5rem;
+        margin-bottom: 3rem;
+        text-align: center;
+        background: linear-gradient(90deg, #2563eb, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Cleaned up home-hero to work WITH Bootstrap row */
+    .home-hero {
+        padding: 5rem 0; /* Increased padding for better breathing room */
+    }
+
+    .home-text h1 {
+        font-size: 4.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.1;
+    }
+
+    .home-text h1 span {
+        color: #ef4444;
+    }
+
+    .purpose-card {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border-left: 4px solid #2563eb;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .purpose-card:hover {
+        transform: translateX(10px);
+        background: white;
+    }
+
+    .service-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+        height: 100%;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .service-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .service-icon {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        margin-bottom: 1.5rem;
+    }
+
+    .contact-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Animation for the medical image */
+    .floating-anim {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+</style>
+
+<section id="home" class="home-hero row align-items-center">
+    <div class="home-text col-lg-7 col-md-12">
+        <span class="badge bg-primary bg-opacity-10 text-primary mb-3 px-3 py-2">Advanced Monitoring</span>
+        <h1>Your Health Is Your <br><span>True Wealth</span></h1>
+        
+        <div class="mt-4">
+            <div class="purpose-card shadow-sm">
+                <strong><i class="fas fa-heartbeat me-2"></i> Real-time Monitoring:</strong> Keep a constant eye on your vital health statistics.
+            </div>
+            <div class="purpose-card shadow-sm">
+                <strong><i class="fas fa-user-md me-2"></i> Expert Connectivity:</strong> Seamlessly bridge the gap between you and your doctor.
+            </div>
+        </div>
+        
+        <div class="mt-5">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard_home' %}" class="btn btn-premium btn-lg me-3 px-4">
+                    <i class="fas fa-columns me-2"></i>Go to Dashboard
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-premium btn-lg me-3 px-4">Get Started</a>
+            {% endif %}
+            <a href="#about" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Learn More</a>
+        </div>
+    </div>
+
+    <div class="col-lg-5 d-none d-lg-block text-center">
+        <img src="https://png.pngtree.com/png-clipart/20220726/original/pngtree-monitor-medical-health-png-image_8412559.png" 
+             class="img-fluid floating-anim" 
+             alt="Health Device" 
+             style="max-width: 90%;">
+    </div>
+</section>
+
+<hr class="my-5 border-0">
+
+<section id="about" class="row align-items-center py-5">
+    <div class="col-lg-6">
+        <img src="https://png.pngtree.com/png-vector/20191010/ourmid/pngtree-sport-lifestyle-health-monitoring-with-smartwatch-and-smartphone-png-image_1805141.jpg" class="img-fluid rounded-4 shadow-lg" alt="App Preview">
+    </div>
+    <div class="col-lg-6 ps-lg-5">
+        <h2 class="section-title text-start mb-4">Why SmartHealth?</h2>
+        <p class="lead text-muted">We provide a unified platform for tracking your vitals and communicating with medical professionals.</p>
+        <ul class="list-unstyled mt-4">
+            <li class="mb-3 d-flex align-items-center"><i class="fas fa-check-circle text-success me-3 fs-4"></i> <strong>24/7 Access:</strong> Your data is available anytime, anywhere.</li>
+            <li class="mb-3 d-flex align-items-center"><i class="fas fa-check-circle text-success me-3 fs-4"></i> <strong>Secure Logs:</strong> Encrypted sharing with your healthcare provider.</li>
+        </ul>
+    </div>
+</section>
+
+<section id="services" class="py-5">
+    <h2 class="section-title">Our Core Services</h2>
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-5">
+            <div class="service-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/2864/2864230.png" class="service-icon" alt="Health Monitoring">
+                <h4 class="fw-bold">Health Monitoring</h4>
+                <p class="text-muted">Track your heart rate, blood pressure, and sleep patterns using advanced wearable integration and manual logging.</p>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="service-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" class="service-icon" alt="Doctor Consultation">
+                <h4 class="fw-bold">Doctor Consultation</h4>
+                <p class="text-muted">Directly share your health reports with certified doctors for faster diagnosis and personalized medical advice.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard_home' %}" class="btn btn-premium btn-lg px-5 shadow">Open My Dashboard <i class="fas fa-arrow-right ms-2"></i></a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn btn-premium btn-lg px-5 shadow">Join Now <i class="fas fa-user-plus ms-2"></i></a>
+        {% endif %}
+    </div>
+</section>
+
+<section id="contact" class="py-5">
+    <h2 class="section-title">Contact Support</h2>
+    <div class="row g-3 justify-content-center">
+        <div class="col-md-4">
+            <div class="contact-item">
+                <i class="fas fa-envelope text-primary fs-3"></i>
+                <div>
+                    <h6 class="mb-0">Email Us</h6>
+                    <small class="text-muted">healthcare@gmail.com</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="contact-item">
+                <i class="fab fa-linkedin text-primary fs-3"></i>
+                <div>
+                    <h6 class="mb-0">LinkedIn</h6>
+                    <small class="text-muted">SmartHealth System</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

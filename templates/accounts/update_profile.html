@@ -1,22 +1,155 @@
-{% extends "base.html" %} {% block content %}
-<div class="container mt-5">
-    <h2>Update Profile</h2>
-    <p>Change your email, phone, or IoT sensor details below.</p>
-    
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href="{% url 'dashboard_home' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+{% extends "base.html" %}
 
-    <hr class="my-4">
-    
-    <div class="alert alert-danger">
-        <h4>Danger Zone</h4>
-        <p>Once you delete your account, there is no going back. Please be certain.</p>
-        <a href="{% url 'delete_account' %}" class="btn btn-danger">Delete My Account</a>
+{% block content %}
+<style>
+    /* Premium Card & Animation */
+    .premium-profile-card {
+        max-width: 600px;
+        width: 100%;
+        border: none;
+        border-radius: 1.5rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+        animation: slideUpFade 0.5s ease-out forwards;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header Styling */
+    .profile-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .icon-circle-primary {
+        width: 70px;
+        height: 70px;
+        background-color: #e0e7ff;
+        color: #4f46e5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+
+    /* Styling Django's raw {{ form.as_p }} output */
+    .django-form-container p {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .django-form-container label {
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: #4b5563;
+        font-size: 0.9rem;
+    }
+
+    .django-form-container input, 
+    .django-form-container select, 
+    .django-form-container textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #cbd5e1;
+        background-color: #f8fafc;
+        transition: all 0.2s ease-in-out;
+        font-size: 1rem;
+    }
+
+    .django-form-container input:focus,
+    .django-form-container select:focus,
+    .django-form-container textarea:focus {
+        border-color: #4f46e5;
+        background-color: #ffffff;
+        outline: 0;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+    }
+
+    /* Form Help Text (if your Django form has it) */
+    .django-form-container .helptext {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    /* Premium Buttons */
+    .btn-premium {
+        border-radius: 0.75rem;
+        padding: 0.8rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .btn-premium:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Modern Danger Zone */
+    .danger-zone-container {
+        border: 1px solid #fecaca;
+        background-color: #fff5f5;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-top: 2.5rem;
+    }
+</style>
+
+<div class="container d-flex justify-content-center align-items-center py-5">
+    <div class="card premium-profile-card">
+        
+        <div class="profile-header">
+            <div class="icon-circle-primary shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                </svg>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Profile Settings</h3>
+            <p class="text-muted mb-0 small">Manage your personal information and IoT sensor details.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <form method="POST" class="django-form-container">
+                {% csrf_token %}
+                
+                {{ form.as_p }}
+                
+                <div class="d-flex flex-column flex-sm-row gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary btn-premium flex-grow-1 shadow-sm" style="background-color: #4f46e5; border: none;">
+                        Save Changes
+                    </button>
+                    <a href="{% url 'dashboard_home' %}" class="btn btn-light btn-premium text-dark border shadow-sm text-center">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+
+            <div class="danger-zone-container">
+                <div class="d-flex align-items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#dc2626" class="me-2" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                    </svg>
+                    <h5 class="text-danger fw-bold mb-0">Danger Zone</h5>
+                </div>
+                <p class="text-muted small mb-3">
+                    Once you delete your account, there is no going back. All health records and sensor configurations will be permanently erased.
+                </p>
+                <a href="{% url 'delete_account' %}" class="btn btn-outline-danger btn-premium w-100 fw-bold">
+                    Delete My Account
+                </a>
+            </div>
+            
+        </div>
     </div>
 </div>
 {% endblock %}

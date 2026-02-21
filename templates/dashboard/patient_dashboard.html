@@ -2,185 +2,240 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2>Welcome, {{ user.username }}</h2>
-        <p class="text-muted" id="dashboard-subtitle">Live IoT Health Data Dashboard</p>
-    </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm {% if 'Risk' in prediction or 'Danger' in prediction %}bg-danger text-white{% else %}bg-success text-white{% endif %}">
-            <div class="card-body text-center">
-                <h5 class="card-title">AI Prediction Status</h5>
-                <p class="card-text fw-bold fs-5">{{ prediction|default:"No data available" }}</p>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+    .fade-in-up { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm border-secondary">
-            <div class="card-header bg-secondary text-white">
-                <h6 class="m-0 font-weight-bold">Filter Historical Data by Date and Time</h6>
-            </div>
-            <div class="card-body bg-light">
-                <form method="GET" class="row g-3 align-items-center">
-                    <div class="col-auto">
-                        <label for="start_time" class="col-form-label fw-bold">From:</label>
-                    </div>
-                    <div class="col-auto">
-                        <input type="datetime-local" id="start_time" name="start_time" class="form-control" value="{{ request.GET.start_time }}">
-                    </div>
-                    <div class="col-auto">
-                        <label for="end_time" class="col-form-label fw-bold">To:</label>
-                    </div>
-                    <div class="col-auto">
-                        <input type="datetime-local" id="end_time" name="end_time" class="form-control" value="{{ request.GET.end_time }}">
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary">Fetch History</button>
-                        <a href="{% url 'dashboard_home' %}" class="btn btn-outline-secondary">Clear Filter</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+    .glass-card {
+        background: #ffffff;
+        border-radius: 1.25rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        border: 1px solid #f1f5f9;
+        height: 100%;
+    }
 
-<div class="row text-center">
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-primary text-white fw-bold">Body Temp</div>
-            <div class="card-body">
-                <h3 class="fw-bold m-0">{{ iot_data.field1|default:"--" }}<small class="fs-6 ms-1">°C</small></h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-secondary text-white fw-bold">Smoke / Gas</div>
-            <div class="card-body">
-                <h3 class="fw-bold m-0">{{ iot_data.field2|default:"--" }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-warning text-dark fw-bold">Alcohol Level</div>
-            <div class="card-body">
-                <h3 class="fw-bold m-0">{{ iot_data.field3|default:"--" }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-info text-white fw-bold">Fall Dist.</div>
-            <div class="card-body">
-                <h3 class="fw-bold m-0">{{ iot_data.field4|default:"--" }}<small class="fs-6 ms-1">cm</small></h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-dark text-white fw-bold">Humidity</div>
-            <div class="card-body">
-                <h3 class="fw-bold m-0">{{ iot_data.field5|default:"--" }}<small class="fs-6 ms-1">%</small></h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-success text-white fw-bold">Room Temp</div>
-            <div class="card-body">
-                <h3 class="fw-bold m-0">{{ iot_data.field6|default:"--" }}<small class="fs-6 ms-1">°C</small></h3>
-            </div>
-        </div>
-    </div>
-</div>
+    .section-title {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        padding-left: 10px;
+        border-left: 4px solid var(--primary);
+    }
 
-<div class="row mt-4">
-    <div class="col-12 mb-4">
-        <div class="card shadow-sm border-dark">
-            <div class="card-header bg-dark text-white fw-bold">Master View: Combined Vitals</div>
-            <div class="card-body"><canvas id="masterChart" height="100"></canvas></div>
+    .chart-container-main { height: 400px; position: relative; }
+    .chart-container-small { height: 200px; position: relative; }
+</style>
+
+<div class="container-fluid fade-in-up">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h2 class="fw-bold text-dark m-0">Diagnostic Dashboard: {{ patient.username|title }}</h2>
+        <button id="exportPdf" class="btn btn-dark btn-sm px-4 py-2" style="border-radius: 0.75rem;">
+            <i class="fas fa-file-pdf me-2"></i> Export Report
+        </button>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3">
+                <p class="text-muted small fw-bold mb-1">Fall Dist.</p>
+                <h4 class="fw-bold m-0" style="color: #f59e0b;">{{ iot_data.field4|default:"--" }}cm</h4>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3">
+                <p class="text-muted small fw-bold mb-1">Humidity</p>
+                <h4 class="fw-bold m-0 text-primary">{{ iot_data.field5|default:"--" }}%</h4>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3">
+                <p class="text-muted small fw-bold mb-1">Room Temp</p>
+                <h4 class="fw-bold m-0 text-success">{{ iot_data.field6|default:"--" }}°C</h4>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3">
+                <p class="text-muted small fw-bold mb-1">Smoke/Gas</p>
+                <h4 class="fw-bold m-0 text-secondary">{{ iot_data.field2|default:"--" }}</h4>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3">
+                <p class="text-muted small fw-bold mb-1">Alcohol</p>
+                <h4 class="fw-bold m-0" style="color: #a21caf;">{{ iot_data.field3|default:"--" }}</h4>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4 mb-3">
+            <div class="card glass-card p-3">
+                <p class="text-muted small fw-bold mb-1">Rain</p>
+                <h4 class="fw-bold m-0 text-info">{{ iot_data.field7|default:"--" }}</h4>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6 mb-4"><div class="card shadow-sm"><div class="card-body"><canvas id="bodyTempChart"></canvas></div></div></div>
-    <div class="col-md-6 mb-4"><div class="card shadow-sm"><div class="card-body"><canvas id="roomEnvChart"></canvas></div></div></div>
-</div>
+    <h5 class="section-title">Global Sensor Correlation Trends</h5>
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card glass-card p-4">
+                <div class="chart-container-main">
+                    <canvas id="mainTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div class="row mb-5">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-secondary text-white fw-bold">Raw Sensor Data Log</div>
-            <div class="table-responsive" style="max-height: 300px;">
-                <table class="table table-sm table-striped text-center mb-0">
-                    <thead class="table-dark sticky-top">
-                        <tr>
-                            <th>Timestamp</th><th>Body Temp</th><th>Smoke</th><th>Fall Dist.</th><th>Humid</th><th>Room Temp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
+    <h5 class="section-title">Individual Metric Analysis</h5>
+    <div class="row mb-5">
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3">
+                <h6 class="fw-bold small text-muted mb-3">Fall Distance (cm)</h6>
+                <div class="chart-container-small"><canvas id="chartFall"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3">
+                <h6 class="fw-bold small text-muted mb-3">Humidity (%)</h6>
+                <div class="chart-container-small"><canvas id="chartHumid"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3">
+                <h6 class="fw-bold small text-muted mb-3">Room Temp (°C)</h6>
+                <div class="chart-container-small"><canvas id="chartTemp"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3">
+                <h6 class="fw-bold small text-muted mb-3">Smoke & Gas Level</h6>
+                <div class="chart-container-small"><canvas id="chartSmoke"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3">
+                <h6 class="fw-bold small text-muted mb-3">Alcohol Level</h6>
+                <div class="chart-container-small"><canvas id="chartAlcohol"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card glass-card p-3">
+                <h6 class="fw-bold small text-muted mb-3">Rain Presence</h6>
+                <div class="chart-container-small"><canvas id="chartRain"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card glass-card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center" id="vitalsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Fall (cm)</th>
+                                <th>Humid (%)</th>
+                                <th>Room (°C)</th>
+                                <th>Smoke</th>
+                                <th>Alcohol</th>
+                                <th>Rain</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const isFiltering = window.location.search.includes("start_time");
-    if (!isFiltering) { setTimeout(() => { window.location.reload(); }, 15000); }
-
     document.addEventListener("DOMContentLoaded", function() {
-        const subtitle = document.getElementById("dashboard-subtitle");
-        subtitle.innerHTML += ` <span class="badge bg-secondary">${new Date().toLocaleTimeString()}</span>`;
-
-        const rawData = '{{ chart_data|escapejs }}';
-        if (!rawData || rawData === '[]') return;
-        const feeds = JSON.parse(rawData);
-
+        const rawDataStr = '{{ chart_data|escapejs }}';
+        if (!rawDataStr || rawDataStr === '[]') return;
+        
+        const feeds = JSON.parse(rawDataStr);
         const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        const data = {
-            temp: feeds.map(f => parseFloat(f.field1 || 0)),
-            smoke: feeds.map(f => parseFloat(f.field2 || 0)),
-            fall: feeds.map(f => parseFloat(f.field4 || 0)),
-            roomT: feeds.map(f => parseFloat(f.field6 || 0))
+        
+        // Data extraction
+        const dataSet = {
+            fall: feeds.map(f => parseFloat(f.field4) || 0),
+            humid: feeds.map(f => parseFloat(f.field5) || 0),
+            temp: feeds.map(f => parseFloat(f.field6) || 0),
+            smoke: feeds.map(f => parseFloat(f.field2) || 0),
+            alcohol: feeds.map(f => parseFloat(f.field3) || 0),
+            rain: feeds.map(f => parseFloat(f.field7) || 0)
         };
 
         // Populate Table
         const tbody = document.getElementById('tableBody');
-        [...feeds].reverse().forEach(f => {
-            tbody.innerHTML += `<tr>
-                <td>${new Date(f.created_at).toLocaleString()}</td>
-                <td>${f.field1}°C</td><td>${f.field2}</td><td>${f.field4}cm</td><td>${f.field5}%</td><td>${f.field6}°C</td>
-            </tr>`;
+        [...feeds].reverse().forEach((f) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="small text-muted">${new Date(f.created_at).toLocaleString()}</td>
+                    <td>${f.field4 || '--'}</td>
+                    <td>${f.field5 || '--'}</td>
+                    <td>${f.field6 || '--'}</td>
+                    <td>${f.field2 || '--'}</td>
+                    <td>${f.field3 || '--'}</td>
+                    <td><span class="badge bg-info bg-opacity-10 text-info">${f.field7 || '--'}</span></td>
+                </tr>`;
         });
 
-        // Charts Logic
-        new Chart(document.getElementById('masterChart'), {
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+        };
+
+        // Helper to create individual charts
+        const initSmallChart = (id, label, data, color) => {
+            new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: label, data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.4, pointRadius: 2 }]
+                },
+                options: commonOptions
+            });
+        };
+
+        // Init individual charts
+        initSmallChart('chartFall', 'Fall Distance', dataSet.fall, '#f59e0b');
+        initSmallChart('chartHumid', 'Humidity', dataSet.humid, '#0284c7');
+        initSmallChart('chartTemp', 'Room Temp', dataSet.temp, '#16a34a');
+        initSmallChart('chartSmoke', 'Smoke', dataSet.smoke, '#64748b');
+        initSmallChart('chartAlcohol', 'Alcohol', dataSet.alcohol, '#a21caf');
+        initSmallChart('chartRain', 'Rain', dataSet.rain, '#06b6d4');
+
+        // Main Global Trend Chart
+        const mainCtx = document.getElementById('mainTrendChart').getContext('2d');
+        new Chart(mainCtx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Body Temp', data: data.temp, borderColor: '#0d6efd', yAxisID: 'y' },
-                    { label: 'Smoke', data: data.smoke, borderColor: '#dc3545', yAxisID: 'y1' }
+                    { label: 'Fall (cm)', data: dataSet.fall, borderColor: '#f59e0b', tension: 0.3 },
+                    { label: 'Humid (%)', data: dataSet.humid, borderColor: '#0284c7', tension: 0.3 },
+                    { label: 'Temp (°C)', data: dataSet.temp, borderColor: '#16a34a', tension: 0.3 },
+                    { label: 'Smoke', data: dataSet.smoke, borderColor: '#64748b', tension: 0.3 },
+                    { label: 'Alcohol', data: dataSet.alcohol, borderColor: '#a21caf', tension: 0.3 },
+                    { label: 'Rain', data: dataSet.rain, borderColor: '#06b6d4', tension: 0.3 }
                 ]
             },
-            options: { scales: { y: { position: 'left' }, y1: { position: 'right', grid: { drawOnChartArea: false } } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { y: { grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+            }
         });
-
-        const quickChart = (id, label, d, col) => {
-            new Chart(document.getElementById(id), {
-                type: 'line',
-                data: { labels: labels, datasets: [{ label: label, data: d, borderColor: col, fill: true, backgroundColor: col+'22' }] }
-            });
-        };
-        quickChart('bodyTempChart', 'Body Temp Trend', data.temp, '#0d6efd');
-        quickChart('roomEnvChart', 'Room Temp Trend', data.roomT, '#198754');
     });
 </script>
 {% endblock %}
