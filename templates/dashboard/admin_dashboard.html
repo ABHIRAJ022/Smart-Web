@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
     /* Entrance Animations */
     .fade-in-up {
@@ -24,46 +26,29 @@
         border-radius: 2rem;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         overflow: hidden;
-        transition: all 0.4s ease;
     }
 
-    /* Secure Control Center Header - Cyber Style */
+    /* Secure Control Center Header */
     .admin-header-bg {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: #ffffff;
-        padding: 5rem 2rem 7rem;
+        padding: 4rem 2rem 6rem;
         text-align: center;
         position: relative;
-        overflow: hidden;
-    }
-
-    /* Decorative background circles for the header */
-    .admin-header-bg::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -10%;
-        width: 300px;
-        height: 300px;
-        background: rgba(56, 189, 248, 0.1);
-        border-radius: 50%;
-        filter: blur(60px);
     }
 
     /* Glowing Shield Icon with Pulse */
     .icon-shield-container {
-        width: 90px;
-        height: 90px;
+        width: 80px; height: 80px;
         background: rgba(56, 189, 248, 0.1);
         border: 2px solid rgba(56, 189, 248, 0.3);
         color: #38bdf8;
-        border-radius: 24px;
+        border-radius: 22px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
         animation: pulse-glow 2s infinite;
     }
 
@@ -76,153 +61,153 @@
     /* Overlapping Feature Grid */
     .system-feature-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1.5rem;
-        margin-top: -5rem;
-        padding: 0 2.5rem 3rem;
+        margin-top: -4rem;
+        padding: 0 2rem 3rem;
         position: relative;
-        z-index: 10;
     }
 
     .feature-box {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(5px);
+        background: #ffffff;
         border-radius: 1.25rem;
         padding: 2rem 1.5rem;
-        text-align: center;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s ease;
     }
 
     .feature-box:hover {
-        transform: translateY(-10px);
-        background: #ffffff;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 35px rgba(0,0,0,0.1);
     }
 
-    .feature-icon-wrapper {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1.25rem;
+    /* System Audit Log Style */
+    .audit-terminal {
+        background: #0f172a;
+        color: #38bdf8;
+        font-family: 'Fira Code', monospace;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        max-height: 250px;
+        overflow-y: auto;
     }
 
-    /* Premium Button - Cyber Gradient */
+    .audit-line { margin-bottom: 0.5rem; display: flex; gap: 10px; }
+    .audit-timestamp { color: #64748b; }
+
     .btn-admin-portal {
         background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-        border: none;
-        border-radius: 1rem;
-        padding: 1.1rem 3.5rem;
-        font-weight: 700;
-        font-size: 1.1rem;
-        color: white;
-        transition: all 0.4s ease;
-        box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3);
-        display: inline-flex;
-        align-items: center;
-        gap: 1rem;
+        border: none; border-radius: 0.85rem;
+        padding: 1rem 2.5rem;
+        font-weight: 700; color: white;
+        transition: all 0.3s ease;
     }
 
     .btn-admin-portal:hover {
-        transform: translateY(-3px) scale(1.03);
-        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.4);
-        color: white;
-        letter-spacing: 0.5px;
-    }
-
-    .status-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: rgba(34, 197, 94, 0.1);
-        color: #22c55e;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        margin-bottom: 1rem;
-    }
-
-    .dot-blink {
-        width: 8px;
-        height: 8px;
-        background-color: #22c55e;
-        border-radius: 50%;
-        animation: blink 1.5s infinite;
-    }
-
-    @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.3; }
-        100% { opacity: 1; }
+        transform: scale(1.05); color: white;
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
     }
 </style>
 
-<div class="row mb-5 fade-in-up">
-    <div class="col-12 d-flex justify-content-between align-items-end">
-        <div>
-            <h1 class="fw-800 text-dark mb-1" style="letter-spacing: -1.5px;">Control Center</h1>
-            <p class="text-muted mb-0">Elevated privileges active for <span class="text-primary fw-700">@{{ user.username }}</span></p>
-        </div>
-        <div class="status-indicator">
-            <span class="dot-blink"></span> System Encryption Active
+<div class="container py-4">
+    <div class="row mb-4 fade-in-up">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fw-800 text-dark mb-1" style="letter-spacing: -1px;">Control Center</h1>
+                <p class="text-muted small">Global Root Privileges: <span class="badge bg-soft-primary text-primary">Superuser Mode</span></p>
+            </div>
+            <div class="text-end">
+                <span class="text-muted small d-block">Server Status</span>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3">
+                    <i class="fas fa-circle me-1 small"></i> Node Online
+                </span>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row fade-in-up delay-1">
-    <div class="col-12">
-        <div class="admin-glass-card mb-5">
-            
-            <div class="admin-header-bg">
-                <div class="icon-shield-container">
-                    <i class="fas fa-shield-halved"></i>
-                </div>
-                <h2 class="fw-bold mb-3">System Core Management</h2>
-                <p class="text-slate-300 mx-auto mb-5" style="max-width: 650px; color: #94a3b8; font-size: 1.1rem;">
-                    Perform advanced administrative tasks, monitor real-time data flow, and manage the underlying architecture of the SmartHealth network.
-                </p>
-                
-                <a href="/admin/" class="btn btn-admin-portal">
-                    Launch Django Backend <i class="fas fa-terminal"></i>
-                </a>
+    <div class="admin-glass-card fade-in-up delay-1">
+        <div class="admin-header-bg">
+            <div class="icon-shield-container">
+                <i class="fas fa-shield-halved"></i>
             </div>
+            <h2 class="fw-bold mb-2">Core Architecture</h2>
+            <p class="text-white-50 mx-auto mb-4" style="max-width: 600px;">
+                Direct access to the underlying Django relational database and SmartHealth system configuration.
+            </p>
+            <a href="/admin/" target="_blank" class="btn btn-admin-portal">
+                <i class="fas fa-terminal me-2"></i> Open Command Portal
+            </a>
+        </div>
 
-            <div class="system-feature-grid fade-in-up delay-2">
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper" style="background: rgba(59, 130, 246, 0.1);">
+        <div class="system-feature-grid">
+            <div class="feature-box">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-4">
                         <i class="fas fa-users-gear text-primary fs-4"></i>
                     </div>
-                    <h5 class="fw-bold text-dark mb-2">User Identity</h5>
-                    <p class="text-muted small mb-0">Oversee global accounts, verify credentials, and manage role assignments.</p>
+                    <h5 class="fw-bold m-0">Identity & Roles</h5>
                 </div>
-
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper" style="background: rgba(34, 197, 94, 0.1);">
-                        <i class="fas fa-server text-success fs-4"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Data Integrity</h5>
-                    <p class="text-muted small mb-0">Access raw medical logs, IoT telemetry, and encrypted patient records.</p>
-                </div>
-
-                <div class="feature-box">
-                    <div class="feature-icon-wrapper" style="background: rgba(245, 158, 11, 0.1);">
-                        <i class="fas fa-fingerprint text-warning fs-4"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Permission Matrix</h5>
-                    <p class="text-muted small mb-0">Configure authentication layers and doctor-patient relationship tokens.</p>
+                <p class="text-muted small">Manage authentication tokens, assign doctor privileges, and audit user login attempts.</p>
+                <hr class="my-3 opacity-50">
+                <div class="d-flex justify-content-between small">
+                    <span>Total Users</span>
+                    <span class="fw-bold">Active</span>
                 </div>
             </div>
 
+            <div class="feature-box">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-4">
+                        <i class="fas fa-database text-success fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold m-0">Data Registry</h5>
+                </div>
+                <p class="text-muted small">View raw sensor telemetry streams and clinical logs before they are processed by the AI.</p>
+                <hr class="my-3 opacity-50">
+                <div class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i> Syncing via ThingSpeak</div>
+            </div>
+
+            <div class="feature-box">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-4">
+                        <i class="fas fa-key text-warning fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold m-0">Global Policy</h5>
+                </div>
+                <p class="text-muted small">Update system-wide alert thresholds and medical emergency contact protocols.</p>
+                <hr class="my-3 opacity-50">
+                <div class="text-warning small fw-bold">AES-256 Encryption Active</div>
+            </div>
+        </div>
+
+        <div class="px-4 pb-5">
+            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-microchip me-2"></i> Live System Audit Log</h6>
+            <div class="audit-terminal">
+                <div class="audit-line">
+                    <span class="audit-timestamp">[18:04:11]</span>
+                    <span>SYSTEM: Handshake initiated with ThingSpeak API...</span>
+                </div>
+                <div class="audit-line">
+                    <span class="audit-timestamp">[18:04:12]</span>
+                    <span class="text-success">SUCCESS: Data channel #2039121 connected.</span>
+                </div>
+                <div class="audit-line">
+                    <span class="audit-timestamp">[18:05:01]</span>
+                    <span>AUTH: Admin session refreshed for @{{ user.username }}</span>
+                </div>
+                <div class="audit-line">
+                    <span class="audit-timestamp">[18:05:45]</span>
+                    <span class="text-warning">INFO: AI Prediction model updated to v2.4.1</span>
+                </div>
+                <div id="terminal-cursor" class="audit-line">
+                    <span class="audit-timestamp">>></span>
+                    <span class="text-white">Listening for system events...<span class="dot-blink">_</span></span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-
 
 {% endblock %}
